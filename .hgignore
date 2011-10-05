@@ -7,6 +7,5 @@ syntax: glob
 *.gpState
 bin
 obj
-TestResults/*.trx
-Irony_All.2010.sln - Shortcut.lnk
+*.lnk
 TestResults/*
