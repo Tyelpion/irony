@@ -1,0 +1,39 @@
+﻿<?xml version="1.0"?>
+<package
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <metadata
+        xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+        <id>Irony</id>
+        <version>0.0.0.0-pre1</version>
+        <authors>Roman Ivantsov</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Irony is a development kit for implementing languages on .NET platform. In Irony the target language grammar is coded directly in c# using operator overloading to express grammar constructs. Irony's scanner and parser modules use the grammar encoded as c# class to control the parsing process.</description>
+        <summary>Irony is a development kit for implementing languages on .NET platform. Unlike most existing yacc/lex-style solutions Irony does not employ any scanner or parser code generation from grammar specifications written in a specialized meta-language. In Irony the target language grammar is coded directly in c# using operator overloading to express grammar constructs. Irony's scanner and parser modules use the grammar encoded as c# class to control the parsing process. See the expression grammar sample for an example of grammar definition in c# class, and using it in a working parser.</summary>
+        <language>en-US</language>
+        <copyright>Copyright (c) 2011 Roman Ivantsov</copyright>
+        <licenseUrl>https://irony.codeplex.com/license</licenseUrl>
+        <projectUrl>https://irony.codeplex.com/</projectUrl>
+        <references>
+            <reference
+                file="Irony.dll" />
+            <reference
+                file="Irony.Interpreter.dll" />
+        </references>
+        <tags>irony ast grammar</tags>
+    </metadata>
+    <files>
+        <file
+            src="Irony\bin\Release\Irony.dll"
+            target="lib\net45" />
+        <file
+            src="Irony\bin\Release\Irony.pdb"
+            target="lib\net45" />
+        <file
+            src="Irony.Interpreter\bin\Release\Irony.Interpreter.dll"
+            target="lib\net45" />
+        <file
+            src="Irony.Interpreter\bin\Release\Irony.Interpreter.pdb"
+            target="lib\net45" />
+    </files>
+</package>
