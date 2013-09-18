@@ -5,11 +5,10 @@
     <metadata
         xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
         <id>Irony.Interpreter</id>
-        <version>0.0.0.0-alpha1</version>
+        <version>0.9-beta1</version>
         <authors>Roman Ivantsov</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Irony is a development kit for implementing languages on .NET platform. In Irony the target language grammar is coded directly in c# using operator overloading to express grammar constructs. Irony's scanner and parser modules use the grammar encoded as c# class to control the parsing process.</description>
-        <summary>Irony is a development kit for implementing languages on .NET platform. Unlike most existing yacc/lex-style solutions Irony does not employ any scanner or parser code generation from grammar specifications written in a specialized meta-language. In Irony the target language grammar is coded directly in c# using operator overloading to express grammar constructs. Irony's scanner and parser modules use the grammar encoded as c# class to control the parsing process.</summary>
         <language>en-US</language>
         <copyright>Copyright (c) 2013 Roman Ivantsov</copyright>
         <licenseUrl>https://irony.codeplex.com/license</licenseUrl>
@@ -17,7 +16,7 @@
         <dependencies>
             <dependency
                 id="Irony"
-                version="0.0.0.0-alpha1" />
+                version="0.9-beta1" />
         </dependencies>
         <references>
             <reference
