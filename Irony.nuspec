@@ -5,7 +5,7 @@
     <metadata
         xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
         <id>Irony</id>
-        <version>0.9.0-net40</version>
+        <version>0.9.1-net40</version>
         <authors>Roman Ivantsov</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Irony is a development kit for implementing languages on .NET platform. In Irony the target language grammar is coded directly in c# using operator overloading to express grammar constructs. Irony's scanner and parser modules use the grammar encoded as c# class to control the parsing process.</description>
