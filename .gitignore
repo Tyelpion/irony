@@ -9,3 +9,5 @@ bin
 obj
 *.lnk
 TestResults/*
+packages
+packages.config
