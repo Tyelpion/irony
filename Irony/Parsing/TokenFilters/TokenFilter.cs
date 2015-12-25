@@ -46,12 +46,10 @@ namespace Irony.Parsing
 		}
 
 		public virtual void Reset()
-		{
-		}
+		{ }
 
 		protected internal virtual void OnSetSourceLocation(SourceLocation location)
-		{
-		}
+		{ }
 	}
 
 	public class TokenFilterList : List<TokenFilter> { }

@@ -1,117 +1,133 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
-namespace Irony.Parsing {
+namespace Irony.Parsing
+{
+	public class LineContinuationTerminal : Terminal
+	{
+		public LineContinuationTerminal(string name, params string[] startSymbols) : base(name, TokenCategory.Outline)
+		{
+			var symbols = startSymbols.Where(s => !IsNullOrWhiteSpace(s)).ToArray();
+			this.StartSymbols = new StringList(symbols);
 
-  public class LineContinuationTerminal : Terminal {
+			if (this.StartSymbols.Count == 0)
+				this.StartSymbols.AddRange(_defaultStartSymbols);
 
-    public LineContinuationTerminal(string name, params string[] startSymbols) : base(name, TokenCategory.Outline) {
-      var symbols = startSymbols.Where(s => !IsNullOrWhiteSpace(s)).ToArray();
-      StartSymbols = new StringList(symbols);
-      if (StartSymbols.Count == 0)
-        StartSymbols.AddRange(_defaultStartSymbols);
-      Priority = TerminalPriority.High;
-    }
+			this.Priority = TerminalPriority.High;
+		}
 
-    public StringList StartSymbols;
-    private string _startSymbolsFirsts = String.Concat(_defaultStartSymbols);
-    static string[] _defaultStartSymbols = new[] { "\\", "_" };
-    public string LineTerminators = "\n\r\v";
+		public string LineTerminators = "\n\r\v";
 
-    #region overrides
+		public StringList StartSymbols;
 
-    public override void Init(GrammarData grammarData) {
-      base.Init(grammarData);
+		private string startSymbolsFirsts = String.Concat(_defaultStartSymbols);
 
-      // initialize string of start characters for fast lookup
-      _startSymbolsFirsts = new String(StartSymbols.Select(s => s.First()).ToArray());
+		private static string[] _defaultStartSymbols = new[] { "\\", "_" };
 
-      if (this.EditorInfo == null) {
-        this.EditorInfo = new TokenEditorInfo(TokenType.Delimiter, TokenColor.Comment, TokenTriggers.None);
-      }
-    }
+		#region overrides
 
-    public override Token TryMatch(ParsingContext context, ISourceStream source) {
-      // Quick check
-      var lookAhead = source.PreviewChar;
-      var startIndex = _startSymbolsFirsts.IndexOf(lookAhead);
-      if (startIndex < 0)
-        return null;
+		public override void Init(GrammarData grammarData)
+		{
+			base.Init(grammarData);
 
-      // Match start symbols
-      if (!BeginMatch(source, startIndex, lookAhead))
-        return null;
+			// initialize string of start characters for fast lookup
+			this.startSymbolsFirsts = new string(this.StartSymbols.Select(s => s.First()).ToArray());
 
-      // Match NewLine
-      var result = CompleteMatch(source);
-      if (result != null)
-        return result;
+			if (this.EditorInfo == null)
+			{
+				this.EditorInfo = new TokenEditorInfo(TokenType.Delimiter, TokenColor.Comment, TokenTriggers.None);
+			}
+		}
 
-      // Report an error
-      return context.CreateErrorToken(Resources.ErrNewLineExpected);
-    }
+		public override Token TryMatch(ParsingContext context, ISourceStream source)
+		{
+			// Quick check
+			var lookAhead = source.PreviewChar;
+			var startIndex = this.startSymbolsFirsts.IndexOf(lookAhead);
+			if (startIndex < 0)
+				return null;
 
-    private bool BeginMatch(ISourceStream source, int startFrom, char lookAhead) {
-      foreach (var startSymbol in StartSymbols.Skip(startFrom)) {
-        if (startSymbol[0] != lookAhead)
-          continue;
-        if (source.MatchSymbol(startSymbol)) {
-          source.PreviewPosition += startSymbol.Length;
-          return true;
-        }
-      }
-      return false;
-    }
+			// Match start symbols
+			if (!this.BeginMatch(source, startIndex, lookAhead))
+				return null;
 
-    private Token CompleteMatch(ISourceStream source) {
-      if (source.EOF())
-        return null;
+			// Match NewLine
+			var result = this.CompleteMatch(source);
+			if (result != null)
+				return result;
 
-      do {
-        // Match NewLine
-        var lookAhead = source.PreviewChar;
-        if (LineTerminators.IndexOf(lookAhead) >= 0)
-        {
-          source.PreviewPosition++;
-          // Treat \r\n as single NewLine
-          if (!source.EOF() && lookAhead == '\r' && source.PreviewChar == '\n')
-            source.PreviewPosition++;
-          break;
-        }
+			// Report an error
+			return context.CreateErrorToken(Resources.ErrNewLineExpected);
+		}
 
-        // Eat up whitespace
-        if (this.Grammar.IsWhitespaceOrDelimiter(lookAhead))
-        {
-          source.PreviewPosition++;
-          continue;
-        }
+		private bool BeginMatch(ISourceStream source, int startFrom, char lookAhead)
+		{
+			foreach (var startSymbol in this.StartSymbols.Skip(startFrom))
+			{
+				if (startSymbol[0] != lookAhead)
+					continue;
+				if (source.MatchSymbol(startSymbol))
+				{
+					source.PreviewPosition += startSymbol.Length;
+					return true;
+				}
+			}
 
-        // Fail on anything else
-        return null;
-      }
-      while (!source.EOF());
+			return false;
+		}
 
-      // Create output token
-      return source.CreateToken(this.OutputTerminal);
-    }
+		private Token CompleteMatch(ISourceStream source)
+		{
+			if (source.EOF())
+				return null;
 
-    public override IList<string> GetFirsts() {
-      return StartSymbols;
-    }
+			do
+			{
+				// Match NewLine
+				var lookAhead = source.PreviewChar;
+				if (LineTerminators.IndexOf(lookAhead) >= 0)
+				{
+					source.PreviewPosition++;
+					// Treat \r\n as single NewLine
+					if (!source.EOF() && lookAhead == '\r' && source.PreviewChar == '\n')
+						source.PreviewPosition++;
+					break;
+				}
 
-    #endregion
+				// Eat up whitespace
+				if (this.Grammar.IsWhitespaceOrDelimiter(lookAhead))
+				{
+					source.PreviewPosition++;
+					continue;
+				}
 
-    private static bool IsNullOrWhiteSpace(string s) {
+				// Fail on anything else
+				return null;
+			}
+			while (!source.EOF());
+
+			// Create output token
+			return source.CreateToken(this.OutputTerminal);
+		}
+
+		public override IList<string> GetFirsts()
+		{
+			return this.StartSymbols;
+		}
+
+		#endregion overrides
+
+		private static bool IsNullOrWhiteSpace(string s)
+		{
 #if VS2008
-      if (String.IsNullOrEmpty(s))
-        return true;
-      return s.Trim().Length == 0;
-#else
-      return String.IsNullOrWhiteSpace(s);
-#endif
-    }
+			if (string.IsNullOrEmpty(s))
+				return true;
 
-  } // LineContinuationTerminal class
+			return s.Trim().Length == 0;
+#else
+			return string.IsNullOrWhiteSpace(s);
+#endif
+		}
+	}
 }
