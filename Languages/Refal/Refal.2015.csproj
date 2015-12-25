@@ -40,7 +40,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -82,13 +81,13 @@
     <None Include="RefalAstNodes.cd" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Irony.Interpreter\015.Irony.Interpreter.2012.csproj">
-      <Project>{321A7F5D-00C2-4095-9970-075CDEE8C139}</Project>
-      <Name>015.Irony.Interpreter.2012</Name>
+    <ProjectReference Include="..\..\Irony.Interpreter\015.Irony.Interpreter.2015.csproj">
+      <Project>{321a7f5d-00c2-4095-9970-075cdee8c139}</Project>
+      <Name>015.Irony.Interpreter.2015</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Irony\010.Irony.2012.csproj">
-      <Project>{D81F5C91-D7DB-46E5-BC99-49488FB6814C}</Project>
-      <Name>010.Irony.2012</Name>
+    <ProjectReference Include="..\..\Irony\010.Irony.2015.csproj">
+      <Project>{d81f5c91-d7db-46e5-bc99-49488fb6814c}</Project>
+      <Name>010.Irony.2015</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

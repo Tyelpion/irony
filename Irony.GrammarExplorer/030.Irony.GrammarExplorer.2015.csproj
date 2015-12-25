@@ -141,16 +141,6 @@
     <None Include="Highlighter\AboutCodeHighlighter.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Irony.Interpreter\015.Irony.Interpreter.2012.csproj">
-      <Project>{321A7F5D-00C2-4095-9970-075CDEE8C139}</Project>
-      <Name>015.Irony.Interpreter.2012</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Irony\010.Irony.2012.csproj">
-      <Project>{D81F5C91-D7DB-46E5-BC99-49488FB6814C}</Project>
-      <Name>010.Irony.2012</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
       <Visible>False</Visible>
       <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
@@ -166,6 +156,16 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Irony.Interpreter\015.Irony.Interpreter.2015.csproj">
+      <Project>{321a7f5d-00c2-4095-9970-075cdee8c139}</Project>
+      <Name>015.Irony.Interpreter.2015</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Irony\010.Irony.2015.csproj">
+      <Project>{d81f5c91-d7db-46e5-bc99-49488fb6814c}</Project>
+      <Name>010.Irony.2015</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

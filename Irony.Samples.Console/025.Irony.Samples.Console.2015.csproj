@@ -72,29 +72,12 @@
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Data.DataSetExtensions">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Irony.Interpreter\015.Irony.Interpreter.2012.csproj">
-      <Project>{321A7F5D-00C2-4095-9970-075CDEE8C139}</Project>
-      <Name>015.Irony.Interpreter.2012</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Irony.Samples\020.Irony.Samples.2012.csproj">
-      <Project>{AD263C0B-99D3-40A9-9DBF-9086CC524A0B}</Project>
-      <Name>020.Irony.Samples.2012</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Irony\010.Irony.2012.csproj">
-      <Project>{D81F5C91-D7DB-46E5-BC99-49488FB6814C}</Project>
-      <Name>010.Irony.2012</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -115,6 +98,20 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Irony.Interpreter\015.Irony.Interpreter.2015.csproj">
+      <Project>{321a7f5d-00c2-4095-9970-075cdee8c139}</Project>
+      <Name>015.Irony.Interpreter.2015</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Irony.Samples\020.Irony.Samples.2015.csproj">
+      <Project>{ad263c0b-99d3-40a9-9dbf-9086cc524a0b}</Project>
+      <Name>020.Irony.Samples.2015</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Irony\010.Irony.2015.csproj">
+      <Project>{d81f5c91-d7db-46e5-bc99-49488fb6814c}</Project>
+      <Name>010.Irony.2015</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
