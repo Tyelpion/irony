@@ -205,7 +205,7 @@ namespace Irony.Parsing
 		}
 
 		/// <summary>
-		/// http://www.microsoft.com/downloads/details.aspx?FamilyId=6D50D709-EAA4-44D7-8AF3-E14280403E6E&displaylang=en section 2
+		/// http://www.microsoft.com/downloads/details.aspx?FamilyId=6D50D709-EAA4-44D7-8AF3-E14280403E6E&amp;displaylang=en section 2
 		/// </summary>
 		/// <param name="name"></param>
 		/// <returns></returns>

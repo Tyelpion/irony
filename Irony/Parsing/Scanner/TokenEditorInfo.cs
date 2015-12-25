@@ -48,7 +48,7 @@ namespace Irony.Parsing
 
 		/// <summary>
 		/// The opening or closing part of a language pair has been parsed. For example,
-		/// in C#, a { or } has been parsed. In XML, a < or > has been parsed.
+		/// in C#, a { or } has been parsed. In XML, a &lt; or &gt; has been parsed.
 		/// </summary>
 		MatchBraces = 2,
 
