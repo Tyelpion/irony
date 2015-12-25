@@ -1,34 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System;
 
-namespace Irony.Parsing {
-  public class ShiftParserAction: ParserAction {
-    public readonly BnfTerm Term; 
-    public readonly ParserState NewState;
+namespace Irony.Parsing
+{
+	public class ShiftParserAction : ParserAction
+	{
+		public readonly ParserState NewState;
+		public readonly BnfTerm Term;
 
-    public ShiftParserAction(Construction.LRItem item) : this(item.Core.Current, item.ShiftedItem.State) {  }
-    
-    public ShiftParserAction(BnfTerm term, ParserState newState) {
-      if (newState == null)
-        throw new Exception("ParserShiftAction: newState may not be null. term: " + term.ToString());
+		public ShiftParserAction(Construction.LRItem item) : this(item.Core.Current, item.ShiftedItem.State)
+		{ }
 
-      Term = term; 
-      NewState = newState;
-    }
+		public ShiftParserAction(BnfTerm term, ParserState newState)
+		{
+			if (newState == null)
+				throw new Exception("ParserShiftAction: newState may not be null. term: " + term.ToString());
 
-    public override void Execute(ParsingContext context) {
-      var currInput = context.CurrentParserInput;
-      currInput.Term.OnShifting(context.SharedParsingEventArgs);
-      context.ParserStack.Push(currInput, NewState);
-      context.CurrentParserState = NewState;
-      context.CurrentParserInput = null;
-    }
+			this.Term = term;
+			this.NewState = newState;
+		}
 
-    public override string ToString() {
-      return string.Format(Resources.LabelActionShift, NewState.Name);
-    }
-  
-  }//class
+		public override void Execute(ParsingContext context)
+		{
+			var currInput = context.CurrentParserInput;
+			currInput.Term.OnShifting(context.SharedParsingEventArgs);
+
+			context.ParserStack.Push(currInput, this.NewState);
+			context.CurrentParserState = this.NewState;
+			context.CurrentParserInput = null;
+		}
+
+		public override string ToString()
+		{
+			return string.Format(Resources.LabelActionShift, this.NewState.Name);
+		}
+	}
 }
