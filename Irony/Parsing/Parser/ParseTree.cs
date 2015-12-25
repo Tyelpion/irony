@@ -113,7 +113,7 @@ namespace Irony.Parsing
 			this.Term = token.Terminal;
 			this.Precedence = this.Term.Precedence;
 			this.Associativity = token.Terminal.Associativity;
-			this.Span = new SourceSpan(token.Location, token.Length);
+			this.Span = new SourceSpan(token.Location, token.EndLocation);
 			this.IsError = token.IsError();
 		}
 

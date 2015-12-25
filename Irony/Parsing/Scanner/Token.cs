@@ -102,6 +102,23 @@ namespace Irony.Parsing
 			get { return this.Text == null ? 0 : this.Text.Length; }
 		}
 
+		public SourceLocation EndLocation
+		{
+			get
+			{
+				var length = this.Length;
+				if (length == 0)
+					return this.Location;
+
+				var pos = this.Location.Position + length;
+				var lines = this.Text.Split('\n');
+				var lineCount = lines.Length - 1;
+				var column = lineCount > 0 ? lines[lines.Length - 1].Length : this.Location.Column + length;
+
+				return new SourceLocation(pos, this.Location.Line + lineCount, column);
+			}
+		}
+
 		public Terminal Terminal { get; private set; }
 
 		public string ValueString

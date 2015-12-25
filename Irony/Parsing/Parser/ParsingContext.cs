@@ -335,12 +335,12 @@ namespace Irony.Parsing
 		public SourceSpan ComputeStackRangeSpan(int nodeCount)
 		{
 			if (nodeCount == 0)
-				return new SourceSpan(this.CurrentParserInput.Span.Location, 0);
+				return new SourceSpan(this.CurrentParserInput.Span.Location, this.CurrentParserInput.Span.Location);
 
 			var first = this.ParserStack[this.ParserStack.Count - nodeCount];
 			var last = this.ParserStack.Top;
 
-			return new SourceSpan(first.Span.Location, last.Span.EndPosition - first.Span.Location.Position);
+			return new SourceSpan(first.Span.Location, last.Span.EndLocation);
 		}
 
 		public void SetSourceLocation(SourceLocation location)
