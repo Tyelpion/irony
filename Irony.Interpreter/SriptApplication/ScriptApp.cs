@@ -1,231 +1,310 @@
-﻿#region License
+#region License
+
 /* **********************************************************************************
  * Copyright (c) Roman Ivantsov
  * This source code is subject to terms and conditions of the MIT License
  * for Irony. A copy of the license can be found in the License.txt file
- * at the root of this distribution. 
- * By using this source code in any fashion, you are agreeing to be bound by the terms of the 
+ * at the root of this distribution.
+ * By using this source code in any fashion, you are agreeing to be bound by the terms of the
  * MIT License.
  * You must not remove this notice from this software.
  * **********************************************************************************/
-#endregion
+
+#endregion License
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Reflection;
 using System.Security;
-using Irony.Parsing;
+using System.Text;
 using Irony.Interpreter.Ast;
+using Irony.Parsing;
 
-namespace Irony.Interpreter {
+namespace Irony.Interpreter
+{
+	public enum AppStatus
+	{
+		Ready,
+		Evaluating,
 
-  public enum AppStatus {
-    Ready,
-    Evaluating,
-    WaitingMoreInput, //command line only
-    SyntaxError,
-    RuntimeError,
-    Crash, //interpreter crash
-    Aborted
-  }
+		/// <summary>
+		/// Command line only
+		/// </summary>
+		WaitingMoreInput,
 
-  /// <summary> Represents a running instance of a script application.  </summary>
-  public sealed class ScriptApp {
-    public readonly LanguageData Language;
-    public readonly LanguageRuntime Runtime;
-    public Parser Parser { get; private set; }
+		SyntaxError,
+		RuntimeError,
 
-    public AppDataMap DataMap;
+		/// <summary>
+		/// Interpreter crash
+		/// </summary>
+		Crash,
 
-    public Scope[] StaticScopes;
-    public Scope MainScope;
-    public IDictionary<string, object> Globals {get; private set;}
-    private IList<Assembly> ImportedAssemblies = new List<Assembly>();
+		Aborted
+	}
 
-    public StringBuilder OutputBuffer = new StringBuilder();
-    private object _lockObject = new object();
+	/// <summary>
+	/// Represents a running instance of a script application.
+	/// </summary>
+	public sealed class ScriptApp
+	{
+		public readonly LanguageData Language;
 
-    // Current mode/status variables
-    public AppStatus Status;
-    public long EvaluationTime;
-    public Exception LastException;
-    public bool RethrowExceptions = true;  
+		public readonly LanguageRuntime Runtime;
 
-    public ParseTree LastScript { get; private set; } //the root node of the last executed script
+		public AppDataMap DataMap;
 
+		public long EvaluationTime;
 
-    #region Constructors
-    public ScriptApp(LanguageData language) {
-      Language = language;
-      var grammar = language.Grammar as InterpretedLanguageGrammar;
-      Runtime = grammar.CreateRuntime(language);
-      DataMap = new AppDataMap(Language.Grammar.CaseSensitive); 
-      Init(); 
-    }
+		public Exception LastException;
 
-    public ScriptApp(LanguageRuntime runtime)  {
-      Runtime = runtime;
-      Language = Runtime.Language;
-      DataMap = new AppDataMap(Language.Grammar.CaseSensitive);
-      Init(); 
-    }
+		public Scope MainScope;
 
-    public ScriptApp(AppDataMap dataMap) {
-      DataMap = dataMap;
-      Init(); 
-    }
+		public StringBuilder OutputBuffer = new StringBuilder();
 
-    [SecuritySafeCritical]
-    private void Init() {
-      Parser = new Parser(Language);
-      //Create static scopes
-      MainScope = new Scope(DataMap.MainModule.ScopeInfo, null, null, null);
-      StaticScopes = new Scope[DataMap.StaticScopeInfos.Count];
-      StaticScopes[0] = MainScope;
-      Globals = MainScope.AsDictionary();
-    }
-    
-    #endregion
+		public bool RethrowExceptions = true;
 
-    public LogMessageList GetParserMessages() {
-      return Parser.Context.CurrentParseTree.ParserMessages;
-    }
-    // Utilities
-    public IEnumerable<Assembly> GetImportAssemblies() {
-      //simple default case - return all assemblies loaded in domain
-      return AppDomain.CurrentDomain.GetAssemblies(); 
-    }
+		public Scope[] StaticScopes;
 
-    public ParseMode ParserMode {
-      get { return Parser.Context.Mode; }
-      set { Parser.Context.Mode = value; }
-    }
+		public AppStatus Status;
 
-    #region Evaluation
-    public object Evaluate(string script) {
-      try {
-        var parsedScript = Parser.Parse(script);
-        if (parsedScript.HasErrors()) {
-          Status = AppStatus.SyntaxError;
-          if (RethrowExceptions)
-            throw new ScriptException("Syntax errors found.");
-          return null;
-        }
+		private object lockObject = new object();
 
-        if (ParserMode == ParseMode.CommandLine && Parser.Context.Status == ParserStatus.AcceptedPartial) {
-          Status = AppStatus.WaitingMoreInput;
-          return null;
-        }
-        LastScript = parsedScript;
-        var result = EvaluateParsedScript();
-        return result;
-      } catch (ScriptException) {
-        throw;
-      } catch (Exception ex) {
-        this.LastException = ex;
-        this.Status = AppStatus.Crash;
-        return null; 
-      }
-    }
+		private IList<Assembly> importedAssemblies = new List<Assembly>();
 
-    // Irony interpreter requires that once a script is executed in a ScriptApp, it is bound to AppDataMap object, 
-    // and all later script executions should be performed only in the context of the same app (or at least by an App with the same DataMap).
-    // The reason is because the first execution sets up a data-binding fields, like slots, scopes, etc, which are bound to ScopeInfo objects, 
-    // which in turn is part of DataMap.
-    public object Evaluate(ParseTree parsedScript) {
-      Util.Check (parsedScript.Root.AstNode != null,  "Root AST node is null, cannot evaluate script. Create AST tree first.");
-      var root = parsedScript.Root.AstNode as AstNode;
-      Util.Check(root != null, 
-        "Root AST node {0} is not a subclass of Irony.Interpreter.AstNode. ScriptApp cannot evaluate this script.", root.GetType());
-      Util.Check (root.Parent == null || root.Parent == DataMap.ProgramRoot, 
-        "Cannot evaluate parsed script. It had been already evaluated in a different application.");
-      LastScript = parsedScript;
-      return EvaluateParsedScript(); 
-    }
+		public IDictionary<string, object> Globals { get; private set; }
 
-    public object Evaluate() {
-      Util.Check (LastScript != null, "No previously parsed/evaluated script.");
-      return EvaluateParsedScript(); 
-    }
+		/// <summary>
+		/// The root node of the last executed script
+		/// </summary>
+		public ParseTree LastScript { get; private set; }
 
-    //Actual implementation
-    private object EvaluateParsedScript() {
-      LastScript.Tag = DataMap;
-      var root = LastScript.Root.AstNode as AstNode;
-      root.DependentScopeInfo = MainScope.Info;
+		public Parser Parser { get; private set; }
 
-      Status = AppStatus.Evaluating;
-      ScriptThread thread = null;
-      try {
-        thread = new ScriptThread(this);
-        var result = root.Evaluate(thread);
-        if (result != null)
-          thread.App.WriteLine(result.ToString());
-        Status = AppStatus.Ready;
-        return result; 
-      } catch (ScriptException se) {
-        Status = AppStatus.RuntimeError;
-        se.Location = thread.CurrentNode.Location;
-        se.ScriptStackTrace = thread.GetStackTrace();
-        LastException = se;
-        if (RethrowExceptions)
-          throw;
-        return null;
-      } catch (Exception ex) {
-        Status = AppStatus.RuntimeError;
-        var se = new ScriptException(ex.Message, ex, thread.CurrentNode.Location, thread.GetStackTrace()); 
-        LastException = se;
-        if (RethrowExceptions)
-          throw se;
-        return null;
+		#region Constructors
 
-      }//catch
+		public ScriptApp(LanguageData language)
+		{
+			this.Language = language;
+			var grammar = language.Grammar as InterpretedLanguageGrammar;
+			this.Runtime = grammar.CreateRuntime(language);
+			this.DataMap = new AppDataMap(this.Language.Grammar.CaseSensitive);
+			this.Init();
+		}
 
-    }
-    #endregion
+		public ScriptApp(LanguageRuntime runtime)
+		{
+			this.Runtime = runtime;
+			this.Language = this.Runtime.Language;
+			this.DataMap = new AppDataMap(this.Language.Grammar.CaseSensitive);
+			this.Init();
+		}
 
+		public ScriptApp(AppDataMap dataMap)
+		{
+			this.DataMap = dataMap;
+			this.Init();
+		}
 
-    #region Output writing
-    #region ConsoleWrite event
-    public event EventHandler<ConsoleWriteEventArgs> ConsoleWrite;
-    private void OnConsoleWrite(string text) {
-      if (ConsoleWrite != null) {
-        ConsoleWriteEventArgs args = new ConsoleWriteEventArgs(text);
-        ConsoleWrite(this, args);
-      }
-    }
-    #endregion
+		[SecuritySafeCritical]
+		private void Init()
+		{
+			this.Parser = new Parser(this.Language);
 
+			// Create static scopes
+			this.MainScope = new Scope(this.DataMap.MainModule.ScopeInfo, null, null, null);
+			this.StaticScopes = new Scope[this.DataMap.StaticScopeInfos.Count];
+			this.StaticScopes[0] = this.MainScope;
+			this.Globals = this.MainScope.AsDictionary();
+		}
 
+		#endregion Constructors
 
-    public void Write(string text) {
-      lock(_lockObject){
-        OnConsoleWrite(text); 
-        OutputBuffer.Append(text);
-      }
-    }
-    public void WriteLine(string text) {
-      lock(_lockObject){
-        OnConsoleWrite(text + Environment.NewLine);
-        OutputBuffer.AppendLine(text);
-      }
-    }
+		public ParseMode ParserMode
+		{
+			get { return this.Parser.Context.Mode; }
+			set { this.Parser.Context.Mode = value; }
+		}
 
-    public void ClearOutputBuffer() {
-      lock(_lockObject){
-        OutputBuffer.Clear();
-      }
-    }
+		public IEnumerable<Assembly> GetImportAssemblies()
+		{
+			// Simple default case - return all assemblies loaded in domain
+			return AppDomain.CurrentDomain.GetAssemblies();
+		}
 
-    public string GetOutput() {
-      lock(_lockObject){
-        return OutputBuffer.ToString();
-      }
-    }
-    #endregion
+		public LogMessageList GetParserMessages()
+		{
+			return this.Parser.Context.CurrentParseTree.ParserMessages;
+		}
 
+		#region Evaluation
 
+		public object Evaluate(string script)
+		{
+			try
+			{
+				var parsedScript = this.Parser.Parse(script);
+				if (parsedScript.HasErrors())
+				{
+					this.Status = AppStatus.SyntaxError;
+					if (this.RethrowExceptions)
+						throw new ScriptException("Syntax errors found.");
 
-  }//class
+					return null;
+				}
+
+				if (this.ParserMode == ParseMode.CommandLine && this.Parser.Context.Status == ParserStatus.AcceptedPartial)
+				{
+					this.Status = AppStatus.WaitingMoreInput;
+					return null;
+				}
+
+				this.LastScript = parsedScript;
+				var result = this.EvaluateParsedScript();
+
+				return result;
+			}
+			catch (ScriptException)
+			{
+				throw;
+			}
+			catch (Exception ex)
+			{
+				this.LastException = ex;
+				this.Status = AppStatus.Crash;
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Irony interpreter requires that once a script is executed in a ScriptApp, it is bound to AppDataMap object,
+		/// and all later script executions should be performed only in the context of the same app (or at least by an App with the same DataMap).
+		/// The reason is because the first execution sets up a data-binding fields, like slots, scopes, etc, which are bound to ScopeInfo objects,
+		/// which in turn is part of DataMap.
+		/// </summary>
+		/// <param name="parsedScript"></param>
+		/// <returns></returns>
+		public object Evaluate(ParseTree parsedScript)
+		{
+			Util.Check(parsedScript.Root.AstNode != null, "Root AST node is null, cannot evaluate script. Create AST tree first.");
+			var root = parsedScript.Root.AstNode as AstNode;
+
+			Util.Check(root != null, "Root AST node {0} is not a subclass of Irony.Interpreter.AstNode. ScriptApp cannot evaluate this script.", root.GetType());
+			Util.Check(root.Parent == null || root.Parent == this.DataMap.ProgramRoot, "Cannot evaluate parsed script. It had been already evaluated in a different application.");
+			this.LastScript = parsedScript;
+
+			return this.EvaluateParsedScript();
+		}
+
+		public object Evaluate()
+		{
+			Util.Check(this.LastScript != null, "No previously parsed/evaluated script.");
+
+			return this.EvaluateParsedScript();
+		}
+
+		/// <summary>
+		/// Actual implementation
+		/// </summary>
+		/// <returns></returns>
+		private object EvaluateParsedScript()
+		{
+			this.LastScript.Tag = this.DataMap;
+			var root = this.LastScript.Root.AstNode as AstNode;
+			root.DependentScopeInfo = this.MainScope.Info;
+
+			this.Status = AppStatus.Evaluating;
+			ScriptThread thread = null;
+
+			try
+			{
+				thread = new ScriptThread(this);
+				var result = root.Evaluate(thread);
+
+				if (result != null)
+					thread.App.WriteLine(result.ToString());
+
+				this.Status = AppStatus.Ready;
+				return result;
+			}
+			catch (ScriptException se)
+			{
+				this.Status = AppStatus.RuntimeError;
+				se.Location = thread.CurrentNode.Location;
+				se.ScriptStackTrace = thread.GetStackTrace();
+				this.LastException = se;
+
+				if (this.RethrowExceptions)
+					throw;
+
+				return null;
+			}
+			catch (Exception ex)
+			{
+				this.Status = AppStatus.RuntimeError;
+				var se = new ScriptException(ex.Message, ex, thread.CurrentNode.Location, thread.GetStackTrace());
+				this.LastException = se;
+
+				if (this.RethrowExceptions)
+					throw se;
+
+				return null;
+			}
+		}
+
+		#endregion Evaluation
+
+		#region Output writing
+
+		#region ConsoleWrite event
+
+		public event EventHandler<ConsoleWriteEventArgs> ConsoleWrite;
+
+		private void OnConsoleWrite(string text)
+		{
+			if (this.ConsoleWrite != null)
+			{
+				ConsoleWriteEventArgs args = new ConsoleWriteEventArgs(text);
+				this.ConsoleWrite(this, args);
+			}
+		}
+
+		#endregion ConsoleWrite event
+
+		public void ClearOutputBuffer()
+		{
+			lock (this.lockObject)
+			{
+				this.OutputBuffer.Clear();
+			}
+		}
+
+		public string GetOutput()
+		{
+			lock (this.lockObject)
+			{
+				return OutputBuffer.ToString();
+			}
+		}
+
+		public void Write(string text)
+		{
+			lock (this.lockObject)
+			{
+				this.OnConsoleWrite(text);
+				this.OutputBuffer.Append(text);
+			}
+		}
+
+		public void WriteLine(string text)
+		{
+			lock (this.lockObject)
+			{
+				this.OnConsoleWrite(text + Environment.NewLine);
+				this.OutputBuffer.AppendLine(text);
+			}
+		}
+
+		#endregion Output writing
+	}
 }

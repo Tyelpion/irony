@@ -1,100 +1,128 @@
-﻿#region License
+#region License
+
 /* **********************************************************************************
  * Copyright (c) Roman Ivantsov
  * This source code is subject to terms and conditions of the MIT License
  * for Irony. A copy of the license can be found in the License.txt file
- * at the root of this distribution. 
- * By using this source code in any fashion, you are agreeing to be bound by the terms of the 
+ * at the root of this distribution.
+ * By using this source code in any fashion, you are agreeing to be bound by the terms of the
  * MIT License.
  * You must not remove this notice from this software.
  * **********************************************************************************/
-#endregion
+
+#endregion License
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using Irony.Parsing;
 using Irony.Interpreter.Ast;
+using Irony.Parsing;
 
-namespace Irony.Interpreter {
-  /// <summary> Represents a running thread in script application.  </summary>
-  public sealed class ScriptThread : IBindingSource {
-    public readonly ScriptApp App;
-    public readonly LanguageRuntime Runtime; 
+namespace Irony.Interpreter
+{
+	/// <summary>
+	/// Represents a running thread in script application.
+	/// </summary>
+	public sealed class ScriptThread : IBindingSource
+	{
+		public readonly ScriptApp App;
 
-    public Scope CurrentScope;
-    public AstNode CurrentNode;
+		public readonly LanguageRuntime Runtime;
 
-    // Tail call parameters
-    public ICallTarget Tail;
-    public object[] TailArgs;
+		public AstNode CurrentNode;
 
-    public ScriptThread(ScriptApp app) {
-      App = app;
-      Runtime = App.Runtime;
-      CurrentScope = app.MainScope;
-    }
+		public Scope CurrentScope;
 
-    public void PushScope(ScopeInfo scopeInfo, object[] parameters) {
-      CurrentScope = new Scope(scopeInfo, CurrentScope, CurrentScope, parameters);
-    }
+		/// <summary>
+		/// Tail call parameters
+		/// </summary>
+		public ICallTarget Tail;
 
+		public object[] TailArgs;
 
+		public ScriptThread(ScriptApp app)
+		{
+			this.App = app;
+			this.Runtime = this.App.Runtime;
+			this.CurrentScope = app.MainScope;
+		}
 
-    public void PushClosureScope(ScopeInfo scopeInfo, Scope closureParent, object[] parameters) {
-      CurrentScope = new Scope(scopeInfo, CurrentScope, closureParent, parameters);
-    }
+		public Binding Bind(string symbol, BindingRequestFlags options)
+		{
+			var request = new BindingRequest(this, this.CurrentNode, symbol, options);
+			var binding = this.Bind(request);
 
-    public void PopScope() {
-      CurrentScope = CurrentScope.Caller;
-    }
+			if (binding == null)
+				this.ThrowScriptError("Unknown symbol '{0}'.", symbol);
 
-    public Binding Bind(string symbol, BindingRequestFlags options) {
-      var request = new BindingRequest(this, CurrentNode, symbol, options);
-      var binding = Bind(request); 
-      if (binding == null)
-        ThrowScriptError("Unknown symbol '{0}'.", symbol); 
-      return binding; 
-    }
+			return binding;
+		}
 
-    #region Exception handling
-    public object HandleError(Exception exception) {
-      if (exception is ScriptException)
-        throw exception;
-      var stack = GetStackTrace();
-      var rex = new ScriptException(exception.Message, exception, CurrentNode.ErrorAnchor, stack);
-      throw rex;
-    }
+		public void PopScope()
+		{
+			this.CurrentScope = this.CurrentScope.Caller;
+		}
 
-    // Throws ScriptException exception.
-    public void ThrowScriptError(string message, params object[] args) {
-      if (args != null && args.Length > 0)
-        message = string.Format(message, args);
-      var loc = GetCurrentLocation();
-      var stack = GetStackTrace(); 
-      throw new ScriptException(message, null, loc, stack);
-    }
+		public void PushClosureScope(ScopeInfo scopeInfo, Scope closureParent, object[] parameters)
+		{
+			this.CurrentScope = new Scope(scopeInfo, this.CurrentScope, closureParent, parameters);
+		}
 
-    //TODO: add construction of Script Call stack
-    public ScriptStackTrace GetStackTrace() {
-      return new ScriptStackTrace();
-    }
+		public void PushScope(ScopeInfo scopeInfo, object[] parameters)
+		{
+			this.CurrentScope = new Scope(scopeInfo, this.CurrentScope, this.CurrentScope, parameters);
+		}
 
-    private SourceLocation GetCurrentLocation() {
-      return this.CurrentNode == null ? new SourceLocation() : CurrentNode.Location;
-    }
+		#region Exception handling
 
-    #endregion
+		/// <summary>
+		/// TODO: add construction of Script Call stack
+		/// </summary>
+		/// <returns></returns>
+		public ScriptStackTrace GetStackTrace()
+		{
+			return new ScriptStackTrace();
+		}
 
+		public object HandleError(Exception exception)
+		{
+			if (exception is ScriptException)
+				throw exception;
 
-    #region IBindingSource Members
+			var stack = this.GetStackTrace();
+			var rex = new ScriptException(exception.Message, exception, CurrentNode.ErrorAnchor, stack);
 
-    public Binding Bind(BindingRequest request) {
-      return Runtime.Bind(request);
-    }
+			throw rex;
+		}
 
-    #endregion
-  }//class
+		/// <summary>
+		/// Throws ScriptException exception.
+		/// </summary>
+		/// <param name="message"></param>
+		/// <param name="args"></param>
+		public void ThrowScriptError(string message, params object[] args)
+		{
+			if (args != null && args.Length > 0)
+				message = string.Format(message, args);
+
+			var loc = this.GetCurrentLocation();
+			var stack = this.GetStackTrace();
+
+			throw new ScriptException(message, null, loc, stack);
+		}
+
+		private SourceLocation GetCurrentLocation()
+		{
+			return this.CurrentNode == null ? new SourceLocation() : this.CurrentNode.Location;
+		}
+
+		#endregion Exception handling
+
+		#region IBindingSource Members
+
+		public Binding Bind(BindingRequest request)
+		{
+			return this.Runtime.Bind(request);
+		}
+
+		#endregion IBindingSource Members
+	}
 }
