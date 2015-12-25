@@ -25,7 +25,7 @@ namespace Irony.Ast
 
 		public AstBuilder(AstContext context)
 		{
-			Context = context;
+			this.Context = context;
 		}
 
 		public virtual void BuildAst(ParseTree parseTree)
@@ -33,12 +33,12 @@ namespace Irony.Ast
 			if (parseTree.Root == null)
 				return;
 
-			Context.Messages = parseTree.ParserMessages;
+			this.Context.Messages = parseTree.ParserMessages;
 
-			if (!Context.Language.AstDataVerified)
-				VerifyLanguageData();
+			if (!this.Context.Language.AstDataVerified)
+				this.VerifyLanguageData();
 
-			if (Context.Language.ErrorLevel == GrammarErrorLevel.Error)
+			if (this.Context.Language.ErrorLevel == GrammarErrorLevel.Error)
 				return;
 
 			BuildAst(parseTree.Root);
@@ -48,9 +48,10 @@ namespace Irony.Ast
 		{
 			var term = parseNode.Term;
 
-			if (term.Flags.IsSet(TermFlags.NoAstNode) || parseNode.AstNode != null) return;
+			if (term.Flags.IsSet(TermFlags.NoAstNode) || parseNode.AstNode != null)
+				return;
 
-			//children first
+			// Children first
 			var processChildren = !parseNode.Term.Flags.IsSet(TermFlags.AstDelayChildren) && parseNode.ChildNodes.Count > 0;
 
 			if (processChildren)
@@ -58,46 +59,55 @@ namespace Irony.Ast
 				var mappedChildNodes = parseNode.GetMappedChildNodes();
 
 				for (int i = 0; i < mappedChildNodes.Count; i++)
-					BuildAst(mappedChildNodes[i]);
+				{
+					this.BuildAst(mappedChildNodes[i]);
+				}
 			}
 
-			//create the node
-			//We know that either NodeCreator or DefaultNodeCreator is set; VerifyAstData create the DefaultNodeCreator
+			// Create the node
+			// We know that either NodeCreator or DefaultNodeCreator is set; VerifyAstData create the DefaultNodeCreator
 			var config = term.AstConfig;
 
 			if (config.NodeCreator != null)
 			{
-				config.NodeCreator(Context, parseNode);
+				config.NodeCreator(this.Context, parseNode);
+
 				// We assume that Node creator method creates node and initializes it, so parser does not need to call
 				// IAstNodeInit.Init() method on node object. But we do call AstNodeCreated custom event on term.
 			}
 			else
 			{
-				//Invoke the default creator compiled when we verified the data
+				// Invoke the default creator compiled when we verified the data
 				parseNode.AstNode = config.DefaultNodeCreator();
 
-				//Initialize node
+				// Initialize node
 				var iInit = parseNode.AstNode as IAstNodeInit;
 
 				if (iInit != null)
-					iInit.Init(Context, parseNode);
+					iInit.Init(this.Context, parseNode);
 			}
 
-			//Invoke the event on term
+			// Invoke the event on term
 			term.OnAstNodeCreated(parseNode);
 		}
 
 		public virtual void VerifyLanguageData()
 		{
-			var gd = Context.Language.GrammarData;
+			var gd = this.Context.Language.GrammarData;
 
-			//Collect all terminals and non-terminals
+			// Collect all terminals and non-terminals
 			var terms = new BnfTermSet();
 
-			//SL does not understand co/contravariance, so doing merge one-by-one
-			foreach (var t in gd.Terminals) terms.Add(t);
+			// SL does not understand co/contravariance, so doing merge one-by-one
+			foreach (var t in gd.Terminals)
+			{
+				terms.Add(t);
+			}
 
-			foreach (var t in gd.NonTerminals) terms.Add(t);
+			foreach (var t in gd.NonTerminals)
+			{
+				terms.Add(t);
+			}
 
 			var missingList = new BnfTermList();
 
@@ -105,16 +115,19 @@ namespace Irony.Ast
 			{
 				var terminal = term as Terminal;
 
-				// only content terminals
-				if (terminal != null && terminal.Category != TokenCategory.Content) continue;
+				// Only content terminals
+				if (terminal != null && terminal.Category != TokenCategory.Content)
+					continue;
 
-				if (term.Flags.IsSet(TermFlags.NoAstNode)) continue;
+				if (term.Flags.IsSet(TermFlags.NoAstNode))
+					continue;
 
 				var config = term.AstConfig;
 
-				if (config.NodeCreator != null || config.DefaultNodeCreator != null) continue;
+				if (config.NodeCreator != null || config.DefaultNodeCreator != null)
+					continue;
 
-				//We must check NodeType
+				// We must check NodeType
 				if (config.NodeType == null)
 					config.NodeType = GetDefaultNodeType(term);
 
@@ -126,19 +139,19 @@ namespace Irony.Ast
 
 			// AST node type is not specified for term {0}. Either assign Term.AstConfig.NodeType, or specify default type(s) in AstBuilder.
 			if (missingList.Count > 0)
-				Context.AddMessage(ErrorLevel.Error, SourceLocation.Empty, Resources.ErrNodeTypeNotSetOn, missingList.ToString());
+				this.Context.AddMessage(ErrorLevel.Error, SourceLocation.Empty, Resources.ErrNodeTypeNotSetOn, missingList.ToString());
 
-			Context.Language.AstDataVerified = true;
+			this.Context.Language.AstDataVerified = true;
 		}
 
 		protected virtual Type GetDefaultNodeType(BnfTerm term)
 		{
 			if (term is NumberLiteral || term is StringLiteral)
-				return Context.DefaultLiteralNodeType;
+				return this.Context.DefaultLiteralNodeType;
 			else if (term is IdentifierTerminal)
-				return Context.DefaultIdentifierNodeType;
+				return this.Context.DefaultIdentifierNodeType;
 			else
-				return Context.DefaultNodeType;
+				return this.Context.DefaultNodeType;
 		}
 
 		/// <summary>
@@ -148,9 +161,9 @@ namespace Irony.Ast
 		/// <returns></returns>
 		private DefaultAstNodeCreator CompileDefaultNodeCreator(Type nodeType)
 		{
-			ConstructorInfo constr = nodeType.GetConstructor(Type.EmptyTypes);
-			DynamicMethod method = new DynamicMethod("CreateAstNode", nodeType, Type.EmptyTypes);
-			ILGenerator il = method.GetILGenerator();
+			var constr = nodeType.GetConstructor(Type.EmptyTypes);
+			var method = new DynamicMethod("CreateAstNode", nodeType, Type.EmptyTypes);
+			var il = method.GetILGenerator();
 
 			il.Emit(OpCodes.Newobj, constr);
 			il.Emit(OpCodes.Ret);

@@ -28,22 +28,21 @@ namespace Irony.Ast
 
 		public Type DefaultNodeType { get; protected set; }
 
-		//default node type for literals
-		//default node type for identifiers
-
 		public LogMessageList Messages;
+
 		public Dictionary<object, object> Values = new Dictionary<object, object>();
 
 		public AstContext(LanguageData language)
 		{
-			Language = language;
+			this.Language = language;
 		}
 
 		public void AddMessage(ErrorLevel level, SourceLocation location, string message, params object[] args)
 		{
 			if (args != null && args.Length > 0)
 				message = string.Format(message, args);
-			Messages.Add(new LogMessage(level, location, message, null));
+
+			this.Messages.Add(new LogMessage(level, location, message, null));
 		}
 	}
 }

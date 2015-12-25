@@ -13,10 +13,10 @@ namespace Irony.Ast
 
 			var map = term.AstConfig.PartsMap;
 
-			//If no map then mapped list is the same as original
+			// If no map then mapped list is the same as original
 			if (map == null) return node.ChildNodes;
 
-			//Create mapped list
+			// Create mapped list
 			var result = new ParseTreeNodeList();
 
 			for (int i = 0; i < map.Length; i++)

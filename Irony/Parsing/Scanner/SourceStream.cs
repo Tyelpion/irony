@@ -1,156 +1,218 @@
 #region License
+
 /* **********************************************************************************
  * Copyright (c) Roman Ivantsov
  * This source code is subject to terms and conditions of the MIT License
  * for Irony. A copy of the license can be found in the License.txt file
- * at the root of this distribution. 
- * By using this source code in any fashion, you are agreeing to be bound by the terms of the 
+ * at the root of this distribution.
+ * By using this source code in any fashion, you are agreeing to be bound by the terms of the
  * MIT License.
  * You must not remove this notice from this software.
  * **********************************************************************************/
-#endregion
+
+#endregion License
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Irony.Parsing {
+namespace Irony.Parsing
+{
+	public class SourceStream : ISourceStream
+	{
+		private char[] chars;
+		private StringComparison stringComparison;
+		private int tabWidth;
+		private int textLength;
 
-  public class SourceStream : ISourceStream {
-    StringComparison _stringComparison;
-    int _tabWidth;
-    char[] _chars;
-    int _textLength;
+		public SourceStream(string text, bool caseSensitive, int tabWidth) : this(text, caseSensitive, tabWidth, new SourceLocation())
+		{
+		}
 
-    public SourceStream(string text, bool caseSensitive, int tabWidth) : this(text, caseSensitive, tabWidth, new SourceLocation()) {
-    }
-    
-    public SourceStream(string text, bool caseSensitive, int tabWidth, SourceLocation initialLocation) {
-      _text = text;
-      _textLength = _text.Length; 
-      _chars = Text.ToCharArray(); 
-      _stringComparison = caseSensitive ? StringComparison.InvariantCulture : StringComparison.InvariantCultureIgnoreCase;
-      _tabWidth = tabWidth; 
-      _location = initialLocation;
-      _previewPosition = _location.Position;
-      if (_tabWidth <= 1) 
-        _tabWidth = 8;
-    }
+		public SourceStream(string text, bool caseSensitive, int tabWidth, SourceLocation initialLocation)
+		{
+			this.text = text;
+			this.textLength = this.text.Length;
+			this.chars = this.text.ToCharArray();
+			this.stringComparison = caseSensitive ? StringComparison.InvariantCulture : StringComparison.InvariantCultureIgnoreCase;
+			this.tabWidth = tabWidth;
+			this.location = initialLocation;
+			this.previewPosition = this.location.Position;
 
-    #region ISourceStream Members
-    public string Text {
-      get { return _text; } 
-    } string _text;
+			if (this.tabWidth <= 1)
+				this.tabWidth = 8;
+		}
 
-    public int Position {
-      get { return _location.Position; }
-      set {
-        if (_location.Position != value) 
-          SetNewPosition(value); 
-      }
-    }
+		#region ISourceStream Members
 
-    public SourceLocation Location {
-      [System.Diagnostics.DebuggerStepThrough]
-      get { return _location; }
-      set { _location = value; }
-    } SourceLocation _location;
+		private SourceLocation location;
 
-    public int PreviewPosition {
-      get { return _previewPosition; }
-      set { _previewPosition = value; } 
-    } int _previewPosition;
+		private int previewPosition;
 
-    public char PreviewChar {
-      [System.Diagnostics.DebuggerStepThrough]
-      get {
-        if (_previewPosition >= _textLength) 
-          return '\0';
-        return _chars[_previewPosition];
-      }
-    }
+		private string text;
 
-    public char NextPreviewChar {
-      [System.Diagnostics.DebuggerStepThrough]
-      get {
-        if (_previewPosition + 1 >= _textLength) return '\0';
-        return _chars[_previewPosition + 1];
-      }
-    }
+		public SourceLocation Location
+		{
+			[System.Diagnostics.DebuggerStepThrough]
+			get { return this.location; }
 
-    public bool MatchSymbol(string symbol) {
-      try {
-        int cmp = string.Compare(_text, PreviewPosition, symbol, 0, symbol.Length, _stringComparison);
-        return cmp == 0;
-      } catch { 
-        //exception may be thrown if Position + symbol.length > text.Length; 
-        // this happens not often, only at the very end of the file, so we don't check this explicitly
-        //but simply catch the exception and return false. Again, try/catch block has no overhead
-        // if exception is not thrown. 
-        return false;
-      }
-    }
+			set { this.location = value; }
+		}
 
-    public Token CreateToken(Terminal terminal) {
-      var tokenText = GetPreviewText();
-      return new Token(terminal, this.Location, tokenText, tokenText);
-    }
-    public Token CreateToken(Terminal terminal, object value) {
-      var tokenText = GetPreviewText();
-      return new Token(terminal, this.Location, tokenText, value); 
-    }
+		public char NextPreviewChar
+		{
+			[System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				if (this.previewPosition + 1 >= this.textLength)
+					return '\0';
 
-    [System.Diagnostics.DebuggerStepThrough]
-    public bool EOF() {
-      return _previewPosition >= _textLength;
-    }
-    #endregion
+				return this.chars[this.previewPosition + 1];
+			}
+		}
 
-    //returns substring from Location.Position till (PreviewPosition - 1)
-    private string GetPreviewText() {
-      var until = _previewPosition;
-      if (until > _textLength) until = _textLength;
-      var p = _location.Position;
-      string text = Text.Substring(p, until - p);
-      return text;
-    }
+		public int Position
+		{
+			get
+			{
+				return this.location.Position;
+			}
+			set
+			{
+				if (this.location.Position != value)
+					this.SetNewPosition(value);
+			}
+		}
 
-    // To make debugging easier: show 20 chars from current position
-    public override string ToString() {
-      string result;
-      try {
-        var p = Location.Position;
-        if (p + 20 < _textLength)
-          result = _text.Substring(p, 20) + Resources.LabelSrcHaveMore;// " ..."
-        else
-          result = _text.Substring(p) + Resources.LabelEofMark; //"(EOF)"
-      } catch (Exception) {
-        result = PreviewChar + Resources.LabelSrcHaveMore;
-      }
-      return string.Format(Resources.MsgSrcPosToString , result, Location); //"[{0}], at {1}"
-    }
+		public char PreviewChar
+		{
+			[System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				if (this.previewPosition >= this.textLength)
+					return '\0';
 
-    //Computes the Location info (line, col) for a new source position.
-    private void SetNewPosition(int newPosition) {
-      if (newPosition < Position)
-        throw new Exception(Resources.ErrCannotMoveBackInSource); 
-      int p = Position; 
-      int col = Location.Column;
-      int line = Location.Line; 
-      while(p <  newPosition) {
-        var curr = _chars[p];
-        switch (curr) {
-          case '\n': line++; col = 0; break;
-          case '\r': break; 
-          case '\t': col = (col / _tabWidth + 1) * _tabWidth;     break;
-          default: col++; break; 
-        } //switch
-        p++;
-      }
-      Location = new SourceLocation(p, line, col); 
-    }
+				return this.chars[this.previewPosition];
+			}
+		}
 
+		public int PreviewPosition
+		{
+			get { return this.previewPosition; }
 
-  }//class
+			set { this.previewPosition = value; }
+		}
 
-}//namespace
+		public string Text
+		{
+			get { return this.text; }
+		}
+
+		public Token CreateToken(Terminal terminal)
+		{
+			var tokenText = this.GetPreviewText();
+			return new Token(terminal, this.Location, tokenText, tokenText);
+		}
+
+		public Token CreateToken(Terminal terminal, object value)
+		{
+			var tokenText = this.GetPreviewText();
+			return new Token(terminal, this.Location, tokenText, value);
+		}
+
+		[System.Diagnostics.DebuggerStepThrough]
+		public bool EOF()
+		{
+			return this.previewPosition >= this.textLength;
+		}
+
+		public bool MatchSymbol(string symbol)
+		{
+			try
+			{
+				int cmp = string.Compare(this.text, this.PreviewPosition, symbol, 0, symbol.Length, this.stringComparison);
+				return cmp == 0;
+			}
+			catch
+			{
+				// Exception may be thrown if Position + symbol.length > text.Length;
+				// this happens not often, only at the very end of the file, so we don't check this explicitly
+				// but simply catch the exception and return false. Again, try/catch block has no overhead
+				// if exception is not thrown.
+				return false;
+			}
+		}
+
+		#endregion ISourceStream Members
+
+		/// <summary>
+		/// To make debugging easier: show 20 chars from current position
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			string result;
+			try
+			{
+				var p = this.Location.Position;
+				if (p + 20 < this.textLength)
+					// " ..."
+					result = this.text.Substring(p, 20) + Resources.LabelSrcHaveMore;
+				else
+					// "(EOF)"
+					result = this.text.Substring(p) + Resources.LabelEofMark;
+			}
+			catch (Exception)
+			{
+				result = this.PreviewChar + Resources.LabelSrcHaveMore;
+			}
+
+			// "[{0}], at {1}"
+			return string.Format(Resources.MsgSrcPosToString, result, this.Location);
+		}
+
+		/// <summary>
+		/// returns substring from Location.Position till (PreviewPosition - 1)
+		/// </summary>
+		/// <returns></returns>
+		private string GetPreviewText()
+		{
+			var until = this.previewPosition;
+			if (until > this.textLength)
+				until = this.textLength;
+
+			var p = this.location.Position;
+			var text = this.text.Substring(p, until - p);
+
+			return text;
+		}
+
+		/// <summary>
+		/// Computes the Location info (line, col) for a new source position.
+		/// </summary>
+		/// <param name="newPosition"></param>
+		private void SetNewPosition(int newPosition)
+		{
+			if (newPosition < Position)
+				throw new Exception(Resources.ErrCannotMoveBackInSource);
+
+			int p = this.Position;
+			int col = this.Location.Column;
+			int line = this.Location.Line;
+
+			while (p < newPosition)
+			{
+				var curr = this.chars[p];
+				switch (curr)
+				{
+					case '\n': line++; col = 0; break;
+					case '\r': break;
+					case '\t': col = (col / this.tabWidth + 1) * this.tabWidth; break;
+					default: col++; break;
+				}
+
+				p++;
+			}
+
+			this.Location = new SourceLocation(p, line, col);
+		}
+	}
+}
