@@ -1,4 +1,5 @@
-﻿#region License
+#region License
+
 /* **********************************************************************************
  * Copyright (c) Roman Ivantsov
  * This source code is subject to terms and conditions of the MIT License
@@ -8,7 +9,8 @@
  * MIT License.
  * You must not remove this notice from this software.
  * **********************************************************************************/
-#endregion
+
+#endregion License
 
 // Aknowledgments
 // This module borrows code and ideas from TinyPG framework by Herre Kuijpers,
@@ -18,264 +20,322 @@
 //
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Windows.Forms;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Linq;
-using System.Threading;
 using System.Runtime.InteropServices;
-using Irony.Parsing;
-using System.Diagnostics;
+using System.Windows.Forms;
 using FastColoredTextBoxNS;
+using Irony.Parsing;
 
-namespace Irony.GrammarExplorer.Highlighter {
+namespace Irony.GrammarExplorer.Highlighter
+{
+	/// <summary>
+	/// Highlights text inside FastColoredTextBox control.
+	/// </summary>
+	public class FastColoredTextBoxHighlighter : NativeWindow, IDisposable, IUIThreadInvoker
+	{
+		public readonly EditorAdapter Adapter;
+		public readonly LanguageData Language;
+		public readonly EditorViewAdapter ViewAdapter;
+		private readonly Style DefaultTokenStyle = new TextStyle(Brushes.Black, null, FontStyle.Regular);
+		private readonly Style ErrorTokenStyle = new WavyLineStyle(240, Color.Red);
+		private readonly Dictionary<TokenColor, Style> TokenStyles = new Dictionary<TokenColor, Style>();
 
-  /// <summary>
-  /// Highlights text inside FastColoredTextBox control.
-  /// </summary>
-  public class FastColoredTextBoxHighlighter : NativeWindow, IDisposable, IUIThreadInvoker {
-    public FastColoredTextBox TextBox;
-    private readonly Dictionary<TokenColor, Style> TokenStyles = new Dictionary<TokenColor, Style>();
-    private readonly Style DefaultTokenStyle = new TextStyle(Brushes.Black, null, FontStyle.Regular);
-    private readonly Style ErrorTokenStyle = new WavyLineStyle(240, Color.Red);
-    public readonly EditorAdapter Adapter;
-    public readonly EditorViewAdapter ViewAdapter;
-    public readonly LanguageData Language;
+		public FastColoredTextBox TextBox;
 
-    private IntPtr _savedEventMask = IntPtr.Zero;
-    bool _colorizing;
-    bool _disposed;
+		private bool colorizing;
+		private bool disposed;
+		private IntPtr savedEventMask = IntPtr.Zero;
 
-    #region Constructor, initialization and disposing
-    public FastColoredTextBoxHighlighter(FastColoredTextBox textBox, LanguageData language) {
-      TextBox = textBox;
-      Adapter = new EditorAdapter(language);
-      ViewAdapter = new EditorViewAdapter(Adapter, this);
-      Language = language;
-      InitStyles();
-      InitBraces();
-      Connect();
-      UpdateViewRange();
-      ViewAdapter.SetNewText(TextBox.Text);
-    }
+		#region Constructor, initialization and disposing
 
-    private void Connect() {
-      TextBox.MouseMove += TextBox_MouseMove;
-      TextBox.TextChanged += TextBox_TextChanged;
-      TextBox.KeyDown += TextBox_KeyDown;
-      TextBox.VisibleRangeChanged += TextBox_ScrollResize;
-      TextBox.SizeChanged += TextBox_ScrollResize;
-      TextBox.Disposed += TextBox_Disposed;
-      ViewAdapter.ColorizeTokens += Adapter_ColorizeTokens;
-      this.AssignHandle(TextBox.Handle);
-    }
+		public FastColoredTextBoxHighlighter(FastColoredTextBox textBox, LanguageData language)
+		{
+			this.TextBox = textBox;
+			this.Adapter = new EditorAdapter(language);
+			this.ViewAdapter = new EditorViewAdapter(this.Adapter, this);
+			this.Language = language;
 
-    private void Disconnect() {
-      if (TextBox != null) {
-        TextBox.MouseMove -= TextBox_MouseMove;
-        TextBox.TextChanged -= TextBox_TextChanged;
-        TextBox.KeyDown -= TextBox_KeyDown;
-        TextBox.Disposed -= TextBox_Disposed;
-        TextBox.VisibleRangeChanged -= TextBox_ScrollResize;
-        TextBox.SizeChanged -= TextBox_ScrollResize;
-      }
-      TextBox = null;
-    }
+			this.InitStyles();
+			this.InitBraces();
+			this.Connect();
+			this.UpdateViewRange();
+			this.ViewAdapter.SetNewText(this.TextBox.Text);
+		}
 
-    public void Dispose() {
-      Adapter.Stop();
-      _disposed = true;
-      Disconnect();
-      this.ReleaseHandle();
-      GC.SuppressFinalize(this);
-    }
+		public void Dispose()
+		{
+			this.Adapter.Stop();
+			this.disposed = true;
+			this.Disconnect();
+			this.ReleaseHandle();
 
-    private void InitStyles() {
-      var commentStyle = new TextStyle(Brushes.Green, null, FontStyle.Italic);
-      var keywordStyle = new TextStyle(Brushes.Blue, null, FontStyle.Bold);
-      var literalStyle = new TextStyle(Brushes.DarkRed, null, FontStyle.Regular);
+			GC.SuppressFinalize(this);
+		}
 
-      TokenStyles[TokenColor.Comment] = commentStyle;
-      TokenStyles[TokenColor.Identifier] = DefaultTokenStyle;
-      TokenStyles[TokenColor.Keyword] = keywordStyle;
-      TokenStyles[TokenColor.Number] = literalStyle;
-      TokenStyles[TokenColor.String] = literalStyle;
-      TokenStyles[TokenColor.Text] = DefaultTokenStyle;
+		private void Connect()
+		{
+			this.TextBox.MouseMove += this.TextBox_MouseMove;
+			this.TextBox.TextChanged += this.TextBox_TextChanged;
+			this.TextBox.KeyDown += this.TextBox_KeyDown;
+			this.TextBox.VisibleRangeChanged += this.TextBox_ScrollResize;
+			this.TextBox.SizeChanged += this.TextBox_ScrollResize;
+			this.TextBox.Disposed += this.TextBox_Disposed;
+			this.ViewAdapter.ColorizeTokens += this.Adapter_ColorizeTokens;
 
-      TextBox.ClearStylesBuffer();
-      TextBox.AddStyle(DefaultTokenStyle);
-      TextBox.AddStyle(ErrorTokenStyle);
-      TextBox.AddStyle(commentStyle);
-      TextBox.AddStyle(keywordStyle);
-      TextBox.AddStyle(literalStyle);
-      TextBox.BracketsStyle = new MarkerStyle(new SolidBrush(Color.FromArgb(50, Color.Blue)));
-      TextBox.BracketsStyle2 = new MarkerStyle(new SolidBrush(Color.FromArgb(70, Color.Green)));
-    }
+			this.AssignHandle(this.TextBox.Handle);
+		}
 
-    private void InitBraces() {
-      // select the first two pair of braces with the length of exactly one char (FCTB restrictions)
-      var braces = Language.Grammar.KeyTerms
-        .Select(pair => pair.Value)
-        .Where(term => term.Flags.IsSet(TermFlags.IsOpenBrace))
-        .Where(term => term.IsPairFor != null && term.IsPairFor is KeyTerm)
-        .Where(term => term.Text.Length == 1)
-        .Where(term => ((KeyTerm)term.IsPairFor).Text.Length == 1)
-        .Take(2);
-      if (braces.Any()) {
-        // first pair
-        var brace = braces.First();
-        TextBox.LeftBracket = brace.Text.First();
-        TextBox.RightBracket = ((KeyTerm)brace.IsPairFor).Text.First();
-        // second pair
-        if (braces.Count() > 1) {
-          brace = braces.Last();
-          TextBox.LeftBracket2 = brace.Text.First();
-          TextBox.RightBracket2 = ((KeyTerm)brace.IsPairFor).Text.First();
-        }
-      }
-    }
+		private void Disconnect()
+		{
+			if (this.TextBox != null)
+			{
+				this.TextBox.MouseMove -= this.TextBox_MouseMove;
+				this.TextBox.TextChanged -= this.TextBox_TextChanged;
+				this.TextBox.KeyDown -= this.TextBox_KeyDown;
+				this.TextBox.Disposed -= this.TextBox_Disposed;
+				this.TextBox.VisibleRangeChanged -= this.TextBox_ScrollResize;
+				this.TextBox.SizeChanged -= this.TextBox_ScrollResize;
+			}
 
-    #endregion
+			this.TextBox = null;
+		}
 
-    #region TextBox event handlers
+		private void InitBraces()
+		{
+			// Select the first two pair of braces with the length of exactly one char (FCTB restrictions)
+			var braces = Language.Grammar.KeyTerms
+			  .Select(pair => pair.Value)
+			  .Where(term => term.Flags.IsSet(TermFlags.IsOpenBrace))
+			  .Where(term => term.IsPairFor != null && term.IsPairFor is KeyTerm)
+			  .Where(term => term.Text.Length == 1)
+			  .Where(term => ((KeyTerm) term.IsPairFor).Text.Length == 1)
+			  .Take(2);
 
-    void TextBox_MouseMove(object sender, MouseEventArgs e) {
-      //TODO: implement showing tip
-    }
+			if (braces.Any())
+			{
+				// First pair
+				var brace = braces.First();
+				this.TextBox.LeftBracket = brace.Text.First();
+				this.TextBox.RightBracket = ((KeyTerm) brace.IsPairFor).Text.First();
 
-    void TextBox_KeyDown(object sender, KeyEventArgs e) {
-      //TODO: implement showing intellisense hints or drop-downs
-    }
+				// Second pair
+				if (braces.Count() > 1)
+				{
+					brace = braces.Last();
+					this.TextBox.LeftBracket2 = brace.Text.First();
+					this.TextBox.RightBracket2 = ((KeyTerm) brace.IsPairFor).Text.First();
+				}
+			}
+		}
 
-    void TextBox_TextChanged(object sender, TextChangedEventArgs e) {
-      //if we are here while colorizing, it means the "change" event is a result of our coloring action
-      if (_colorizing) return;
-      ViewAdapter.SetNewText(TextBox.Text);
-    }
+		private void InitStyles()
+		{
+			var commentStyle = new TextStyle(Brushes.Green, null, FontStyle.Italic);
+			var keywordStyle = new TextStyle(Brushes.Blue, null, FontStyle.Bold);
+			var literalStyle = new TextStyle(Brushes.DarkRed, null, FontStyle.Regular);
 
-    void TextBox_ScrollResize(object sender, EventArgs e) {
-      UpdateViewRange();
-    }
+			this.TokenStyles[TokenColor.Comment] = commentStyle;
+			this.TokenStyles[TokenColor.Identifier] = DefaultTokenStyle;
+			this.TokenStyles[TokenColor.Keyword] = keywordStyle;
+			this.TokenStyles[TokenColor.Number] = literalStyle;
+			this.TokenStyles[TokenColor.String] = literalStyle;
+			this.TokenStyles[TokenColor.Text] = DefaultTokenStyle;
 
-    void TextBox_Disposed(object sender, EventArgs e) {
-      Dispose();
-    }
+			this.TextBox.ClearStylesBuffer();
+			this.TextBox.AddStyle(this.DefaultTokenStyle);
+			this.TextBox.AddStyle(this.ErrorTokenStyle);
+			this.TextBox.AddStyle(commentStyle);
+			this.TextBox.AddStyle(keywordStyle);
+			this.TextBox.AddStyle(literalStyle);
+			this.TextBox.BracketsStyle = new MarkerStyle(new SolidBrush(Color.FromArgb(50, Color.Blue)));
+			this.TextBox.BracketsStyle2 = new MarkerStyle(new SolidBrush(Color.FromArgb(70, Color.Green)));
+		}
 
-    private void UpdateViewRange() {
-      //int minpos = TextBox.GetCharIndexFromPosition(new Point(0, 0));
-      //int maxpos = TextBox.GetCharIndexFromPosition(new Point(TextBox.ClientSize.Width, TextBox.ClientSize.Height));
-      ViewAdapter.SetViewRange(0, TextBox.Text.Length);
-    }
-    #endregion
+		#endregion Constructor, initialization and disposing
 
-    #region WinAPI
-    // some winapís required
-    [DllImport("user32", CharSet =  CharSet.Auto)]
-    private extern static IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, IntPtr lParam);
+		#region TextBox event handlers
 
-    [DllImport("user32.dll")]
-    private static extern bool PostMessageA(IntPtr hWnd, int nBar, int wParam, int lParam);
+		private void TextBox_Disposed(object sender, EventArgs e)
+		{
+			this.Dispose();
+		}
 
-    [DllImport("user32.dll", CharSet = CharSet.Auto)]
-    private static extern int GetScrollPos(int hWnd, int nBar);
+		private void TextBox_KeyDown(object sender, KeyEventArgs e)
+		{
+			// TODO: implement showing intellisense hints or drop-downs
+		}
 
-    [DllImport("user32.dll")]
-    private static extern int SetScrollPos(IntPtr hWnd, int nBar, int nPos, bool bRedraw);
+		private void TextBox_MouseMove(object sender, MouseEventArgs e)
+		{
+			// TODO: implement showing tip
+		}
 
-    private const int WM_SETREDRAW = 0x000B;
-    private const int WM_USER = 0x400;
-    private const int EM_GETEVENTMASK = (WM_USER + 59);
-    private const int EM_SETEVENTMASK = (WM_USER + 69);
-    private const int SB_HORZ = 0x0;
-    private const int SB_VERT = 0x1;
-    private const int WM_HSCROLL = 0x114;
-    private const int WM_VSCROLL = 0x115;
-    private const int SB_THUMBPOSITION = 4;
-    const int WM_PAINT = 0x000F;
+		private void TextBox_ScrollResize(object sender, EventArgs e)
+		{
+			this.UpdateViewRange();
+		}
 
-    private int HScrollPos {
-      get {
-        //sometimes explodes with null reference exception
-        return GetScrollPos((int)TextBox.Handle, SB_HORZ);
-      }
-      set {
-        SetScrollPos((IntPtr)TextBox.Handle, SB_HORZ, value, true);
-        PostMessageA((IntPtr)TextBox.Handle, WM_HSCROLL, SB_THUMBPOSITION + 0x10000 * value, 0);
-      }
-    }
+		private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+		{
+			// If we are here while colorizing, it means the "change" event is a result of our coloring action
+			if (this.colorizing)
+				return;
 
-    private int VScrollPos {
-      get {
-        return GetScrollPos((int)TextBox.Handle, SB_VERT);
-      }
-      set {
-        SetScrollPos((IntPtr)TextBox.Handle, SB_VERT, value, true);
-        PostMessageA((IntPtr)TextBox.Handle, WM_VSCROLL, SB_THUMBPOSITION + 0x10000 * value, 0);
-      }
-    }
-    #endregion
+			this.ViewAdapter.SetNewText(this.TextBox.Text);
+		}
 
-    #region Colorizing tokens
-    public void LockTextBox() {
-      // Stop redrawing:
-      TextBox.BeginUpdate();
-      SendMessage(TextBox.Handle, WM_SETREDRAW, 0, IntPtr.Zero);
-      // Stop sending of events:
-      _savedEventMask = SendMessage(TextBox.Handle, EM_GETEVENTMASK, 0, IntPtr.Zero);
-      SendMessage(TextBox.Handle, EM_SETEVENTMASK, 0, IntPtr.Zero);
-    }
+		private void UpdateViewRange()
+		{
+			this.ViewAdapter.SetViewRange(0, this.TextBox.Text.Length);
+		}
 
-    public void UnlockTextBox() {
-      // turn on events
-      SendMessage(TextBox.Handle, EM_SETEVENTMASK, 0, _savedEventMask);
-      // turn on redrawing
-      SendMessage(TextBox.Handle, WM_SETREDRAW, 1, IntPtr.Zero);
-      TextBox.EndUpdate();
-    }
+		#endregion TextBox event handlers
 
-    void Adapter_ColorizeTokens(object sender, ColorizeEventArgs args) {
-      if (_disposed) return;
-      _colorizing = true;
-      TextBox.BeginUpdate();
-      try {
-        foreach (Token tkn in args.Tokens) {
-          var tokenRange = TextBox.GetRange(tkn.Location.Position, tkn.Location.Position + tkn.Length);
-          var tokenStyle = GetTokenStyle(tkn);
-          tokenRange.ClearStyle(StyleIndex.All);
-          tokenRange.SetStyle(tokenStyle);
-        }
-      } finally {
-        TextBox.EndUpdate();
-        _colorizing = false;
-      }
-    }
+		#region WinAPI
 
-    private Style GetTokenStyle(Token token) {
-      if (token.IsError()) return ErrorTokenStyle;
-      if (token.EditorInfo == null) return DefaultTokenStyle;
-      //Right now we scan source, not parse; initially all keywords are recognized as Identifiers; then they are "backpatched"
-      // by parser when it detects that it is in fact keyword from Grammar. So now this backpatching does not happen,
-      // so we have to detect keywords here
-      var styleIndex = token.EditorInfo.Color;
-      if (token.KeyTerm != null && token.KeyTerm.EditorInfo != null && token.KeyTerm.Flags.IsSet(TermFlags.IsKeyword)) {
-        styleIndex = token.KeyTerm.EditorInfo.Color;
-      }//if
-      Style result;
-      if (TokenStyles.TryGetValue(styleIndex, out result)) return result;
-      return DefaultTokenStyle;
-    }
+		private const int EM_GETEVENTMASK = (WM_USER + 59);
 
-    #endregion
+		private const int EM_SETEVENTMASK = (WM_USER + 69);
 
-    #region IUIThreadInvoker Members
+		private const int SB_HORZ = 0x0;
 
-    public void InvokeOnUIThread(ColorizeMethod colorize) {
-      TextBox.BeginInvoke(new MethodInvoker(colorize));
-    }
+		private const int SB_THUMBPOSITION = 4;
 
-    #endregion
+		private const int SB_VERT = 0x1;
 
-  }//class
+		private const int WM_HSCROLL = 0x114;
 
-}//namespace
+		private const int WM_PAINT = 0x000F;
+
+		private const int WM_SETREDRAW = 0x000B;
+
+		private const int WM_USER = 0x400;
+
+		private const int WM_VSCROLL = 0x115;
+
+		private int HScrollPos
+		{
+			get
+			{
+				// Sometimes explodes with null reference exception
+				return GetScrollPos((int) this.TextBox.Handle, SB_HORZ);
+			}
+			set
+			{
+				SetScrollPos((IntPtr) this.TextBox.Handle, SB_HORZ, value, true);
+				PostMessageA((IntPtr) this.TextBox.Handle, WM_HSCROLL, SB_THUMBPOSITION + 0x10000 * value, 0);
+			}
+		}
+
+		private int VScrollPos
+		{
+			get
+			{
+				return GetScrollPos((int) this.TextBox.Handle, SB_VERT);
+			}
+			set
+			{
+				SetScrollPos((IntPtr) this.TextBox.Handle, SB_VERT, value, true);
+				PostMessageA((IntPtr) this.TextBox.Handle, WM_VSCROLL, SB_THUMBPOSITION + 0x10000 * value, 0);
+			}
+		}
+
+		[DllImport("user32.dll", CharSet = CharSet.Auto)]
+		private static extern int GetScrollPos(int hWnd, int nBar);
+
+		[DllImport("user32.dll")]
+		private static extern bool PostMessageA(IntPtr hWnd, int nBar, int wParam, int lParam);
+
+		[DllImport("user32", CharSet = CharSet.Auto)]
+		private extern static IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, IntPtr lParam);
+
+		[DllImport("user32.dll")]
+		private static extern int SetScrollPos(IntPtr hWnd, int nBar, int nPos, bool bRedraw);
+
+		#endregion WinAPI
+
+		#region Colorizing tokens
+
+		public void LockTextBox()
+		{
+			// Stop redrawing:
+			this.TextBox.BeginUpdate();
+			SendMessage(this.TextBox.Handle, WM_SETREDRAW, 0, IntPtr.Zero);
+
+			// Stop sending of events:
+			this.savedEventMask = SendMessage(this.TextBox.Handle, EM_GETEVENTMASK, 0, IntPtr.Zero);
+			SendMessage(this.TextBox.Handle, EM_SETEVENTMASK, 0, IntPtr.Zero);
+		}
+
+		public void UnlockTextBox()
+		{
+			// Turn on events
+			SendMessage(this.TextBox.Handle, EM_SETEVENTMASK, 0, this.savedEventMask);
+
+			// Turn on redrawing
+			SendMessage(this.TextBox.Handle, WM_SETREDRAW, 1, IntPtr.Zero);
+			this.TextBox.EndUpdate();
+		}
+
+		private void Adapter_ColorizeTokens(object sender, ColorizeEventArgs args)
+		{
+			if (this.disposed)
+				return;
+
+			this.colorizing = true;
+			this.TextBox.BeginUpdate();
+
+			try
+			{
+				foreach (Token tkn in args.Tokens)
+				{
+					var tokenRange = this.TextBox.GetRange(tkn.Location.Position, tkn.Location.Position + tkn.Length);
+					var tokenStyle = this.GetTokenStyle(tkn);
+					tokenRange.ClearStyle(StyleIndex.All);
+					tokenRange.SetStyle(tokenStyle);
+				}
+			}
+			finally
+			{
+				this.TextBox.EndUpdate();
+				this.colorizing = false;
+			}
+		}
+
+		private Style GetTokenStyle(Token token)
+		{
+			if (token.IsError())
+				return this.ErrorTokenStyle;
+
+			if (token.EditorInfo == null)
+				return this.DefaultTokenStyle;
+
+			// Right now we scan source, not parse; initially all keywords are recognized as Identifiers; then they are "backpatched"
+			// by parser when it detects that it is in fact keyword from Grammar. So now this backpatching does not happen,
+			// so we have to detect keywords here
+			var styleIndex = token.EditorInfo.Color;
+			if (token.KeyTerm != null && token.KeyTerm.EditorInfo != null && token.KeyTerm.Flags.IsSet(TermFlags.IsKeyword))
+			{
+				styleIndex = token.KeyTerm.EditorInfo.Color;
+			}
+
+			Style result;
+			if (this.TokenStyles.TryGetValue(styleIndex, out result))
+				return result;
+
+			return this.DefaultTokenStyle;
+		}
+
+		#endregion Colorizing tokens
+
+		#region IUIThreadInvoker Members
+
+		public void InvokeOnUIThread(ColorizeMethod colorize)
+		{
+			this.TextBox.BeginInvoke(new MethodInvoker(colorize));
+		}
+
+		#endregion IUIThreadInvoker Members
+	}
+}

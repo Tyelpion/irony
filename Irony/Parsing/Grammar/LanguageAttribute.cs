@@ -1,53 +1,69 @@
-﻿#region License
+#region License
+
 /* **********************************************************************************
  * Copyright (c) Roman Ivantsov
  * This source code is subject to terms and conditions of the MIT License
  * for Irony. A copy of the license can be found in the License.txt file
- * at the root of this distribution. 
- * By using this source code in any fashion, you are agreeing to be bound by the terms of the 
+ * at the root of this distribution.
+ * By using this source code in any fashion, you are agreeing to be bound by the terms of the
  * MIT License.
  * You must not remove this notice from this software.
  * **********************************************************************************/
-#endregion
+
+#endregion License
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace Irony.Parsing {
+namespace Irony.Parsing
+{
+	[AttributeUsage(AttributeTargets.Class)]
+	public class LanguageAttribute : Attribute
+	{
+		private string description;
 
-  [AttributeUsage(AttributeTargets.Class)]
-  public class LanguageAttribute : Attribute {
-    public LanguageAttribute() : this(null) { }
-    public LanguageAttribute(string languageName) : this(languageName, "1.0", string.Empty) { }
+		private string languageName;
 
-    public LanguageAttribute(string languageName, string version, string description) {
-      _languageName = languageName;
-      _version = version;
-      _description = description;
-    }
-    
-    public string LanguageName {
-      get { return _languageName; }
-    } string _languageName;
+		private string version;
 
-    public string Version {
-      get { return _version; }
-    } string _version;
+		public LanguageAttribute() : this(null)
+		{ }
 
-    public string Description {
-      get { return _description; }
-    } string _description; 
+		public LanguageAttribute(string languageName) : this(languageName, "1.0", string.Empty)
+		{ }
 
-    public static LanguageAttribute GetValue(Type grammarClass) {
-      object[] attrs = grammarClass.GetCustomAttributes(typeof(LanguageAttribute), true);
-      if (attrs != null && attrs.Length > 0) {
-        LanguageAttribute la = attrs[0] as LanguageAttribute;
-        return la; 
-      }
-      return null; 
-    }
+		public LanguageAttribute(string languageName, string version, string description)
+		{
+			this.languageName = languageName;
+			this.version = version;
+			this.description = description;
+		}
 
-  }//class
-}//namespace
+		public string Description
+		{
+			get { return this.description; }
+		}
+
+		public string LanguageName
+		{
+			get { return this.languageName; }
+		}
+
+		public string Version
+		{
+			get { return this.version; }
+		}
+
+		public static LanguageAttribute GetValue(Type grammarClass)
+		{
+			object[] attrs = grammarClass.GetCustomAttributes(typeof(LanguageAttribute), true);
+
+			if (attrs != null && attrs.Length > 0)
+			{
+				var la = attrs[0] as LanguageAttribute;
+				return la;
+			}
+
+			return null;
+		}
+	}
+}
