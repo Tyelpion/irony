@@ -15,14 +15,15 @@
 using System.Collections.Generic;
 using System.Linq;
 
-/// <summary>
-/// Helper data classes for ParserDataBuilder
-/// Note about using LRItemSet vs LRItemList.
-/// It appears that in many places the LRItemList would be a better (and faster) choice than LRItemSet.
-/// Many of the sets are actually lists and don't require hashset's functionality.
-/// But surprisingly, using LRItemSet proved to have much better performance (twice faster for lookbacks/lookaheads computation), so LRItemSet
-/// is used everywhere.
-/// </summary>
+/*
+ * Helper data classes for ParserDataBuilder
+ * Note about using LRItemSet vs LRItemList.
+ * It appears that in many places the LRItemList would be a better (and faster) choice than LRItemSet.
+ * Many of the sets are actually lists and don't require hashset's functionality.
+ * But surprisingly, using LRItemSet proved to have much better performance (twice faster for lookbacks/lookaheads computation), so LRItemSet
+ * is used everywhere.
+*/
+
 namespace Irony.Parsing.Construction
 {
 	public partial class LR0Item

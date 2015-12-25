@@ -575,7 +575,7 @@ namespace Irony.Parsing
 		/// <summary>
 		/// Adds symbols to a group with no-report type, so symbols will not be shown in expected lists in syntax error messages.
 		/// </summary>
-		/// <param name="symbols">Symbols to exclude.</param>
+		/// <param name="terminals"></param>
 		protected void AddToNoReportGroup(params Terminal[] terminals)
 		{
 			this.TermReportGroups.Add(new TermReportGroup(string.Empty, TermReportGroupType.DoNotReport, terminals));

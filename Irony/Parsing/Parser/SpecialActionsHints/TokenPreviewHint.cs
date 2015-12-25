@@ -14,9 +14,10 @@
 
 using System.Linq;
 
-/// <summary>
-/// Original implementation is contributed by Alexey Yakovlev (yallie)
-/// </summary>
+/*
+ * Original implementation is contributed by Alexey Yakovlev (yallie)
+*/
+
 namespace Irony.Parsing
 {
 	using ConditionalEntry = ConditionalParserAction.ConditionalEntry;

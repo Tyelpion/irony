@@ -15,13 +15,14 @@
 using System.Collections;
 using Irony.Parsing;
 
-/// <summary>
-/// Note that we expect more than one interpreter/AST implementation.
-/// Irony.Interpreter namespace provides just one of them. That's why the following AST interfaces
-/// are here, in top Irony namespace and not in Irony.Interpreter.Ast.
-/// In the future, I plan to introduce advanced interpreter, with its own set of AST classes - it will live
-/// in a separate assembly Irony.Interpreter2.dll.
-/// </summary>
+/*
+ * Note that we expect more than one interpreter/AST implementation.
+ * Irony.Interpreter namespace provides just one of them. That's why the following AST interfaces
+ * are here, in top Irony namespace and not in Irony.Interpreter.Ast.
+ * In the future, I plan to introduce advanced interpreter, with its own set of AST classes - it will live
+ * in a separate assembly Irony.Interpreter2.dll.
+*/
+
 namespace Irony.Ast
 {
 	/// <summary>
