@@ -1,27 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Irony.Ast; 
+using Irony.Ast;
 using Irony.Parsing;
 
-namespace Irony.Interpreter.Ast {
-  //A substitute node to use on constructs that are not yet supported by language implementation.
-  // The script would compile Ok but on attempt to evaluate the node would throw a runtime exception
-  public class NotSupportedNode : AstNode {
-    string Name;
-    public override void Init(AstContext context, ParseTreeNode treeNode) {
-      base.Init(context, treeNode);
-      Name = treeNode.Term.ToString();
-      AsString = Name + " (not supported)";
-    }
+namespace Irony.Interpreter.Ast
+{
+	/// <summary>
+	/// A substitute node to use on constructs that are not yet supported by language implementation.
+	/// The script would compile Ok but on attempt to evaluate the node would throw a runtime exception
+	/// </summary>
+	public class NotSupportedNode : AstNode
+	{
+		private string Name;
 
-    protected override object DoEvaluate(ScriptThread thread) {
-      thread.CurrentNode = this;  //standard prolog
-      thread.ThrowScriptError(Resources.ErrConstructNotSupported, Name);
-      return null; //never happens
-    }
+		public override void Init(AstContext context, ParseTreeNode treeNode)
+		{
+			base.Init(context, treeNode);
+			this.Name = treeNode.Term.ToString();
+			this.AsString = this.Name + " (not supported)";
+		}
 
-  }//class
+		protected override object DoEvaluate(ScriptThread thread)
+		{
+			// Standard prolog
+			thread.CurrentNode = this;
+			thread.ThrowScriptError(Resources.ErrConstructNotSupported, this.Name);
+
+			// Never happens
+			return null;
+		}
+	}
 }

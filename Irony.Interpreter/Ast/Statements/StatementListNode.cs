@@ -1,93 +1,122 @@
-﻿#region License
+#region License
+
 /* **********************************************************************************
  * Copyright (c) Roman Ivantsov
  * This source code is subject to terms and conditions of the MIT License
  * for Irony. A copy of the license can be found in the License.txt file
- * at the root of this distribution. 
- * By using this source code in any fashion, you are agreeing to be bound by the terms of the 
+ * at the root of this distribution.
+ * By using this source code in any fashion, you are agreeing to be bound by the terms of the
  * MIT License.
  * You must not remove this notice from this software.
  * **********************************************************************************/
-#endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+#endregion License
 
-using Irony.Ast; 
+using Irony.Ast;
 using Irony.Parsing;
 
-namespace Irony.Interpreter.Ast {
+namespace Irony.Interpreter.Ast
+{
+	public class StatementListNode : AstNode
+	{
+		/// <summary>
+		/// Stores a single child when child count == 1, for fast access
+		/// </summary>
+		private AstNode singleChild;
 
-  public class StatementListNode : AstNode {
-    AstNode _singleChild; //stores a single child when child count == 1, for fast access
+		public override void Init(AstContext context, ParseTreeNode treeNode)
+		{
+			base.Init(context, treeNode);
+			var nodes = treeNode.GetMappedChildNodes();
 
-    public override void Init(AstContext context, ParseTreeNode treeNode) {
-      base.Init(context, treeNode);
-      var nodes = treeNode.GetMappedChildNodes();
-      foreach (var child in nodes) {
-        //don't add if it is null; it can happen that "statement" is a comment line and statement's node is null.
-        // So to make life easier for language creator, we just skip if it is null
-        if (child.AstNode != null) 
-          AddChild(string.Empty, child); 
-      }
-      AsString = "Statement List";
-      if (ChildNodes.Count == 0) {
-        AsString += " (Empty)";
-      } else 
-         ChildNodes[ChildNodes.Count - 1].Flags |= AstNodeFlags.IsTail;
-    }
+			foreach (var child in nodes)
+			{
+				// Don't add if it is null; it can happen that "statement" is a comment line and statement's node is null.
+				// So to make life easier for language creator, we just skip if it is null
+				if (child.AstNode != null)
+					this.AddChild(string.Empty, child);
+			}
 
-    protected override object DoEvaluate(ScriptThread thread) {
-      thread.CurrentNode = this;  //standard prolog
-      lock (LockObject) {
-        switch (ChildNodes.Count) {
-          case 0:
-            Evaluate = EvaluateEmpty;
-            break;
-          case 1:
-            _singleChild = ChildNodes[0];
-            Evaluate = EvaluateOne;
-            break; 
-          default:
-            Evaluate = EvaluateMultiple;
-            break; 
-        }//switch
-      }//lock
-      var result = Evaluate(thread);
-      thread.CurrentNode = Parent; //standard epilog
-      return result;
-    }
+			this.AsString = "Statement List";
 
-    private object EvaluateEmpty(ScriptThread thread) {
-      return null; 
-    }
+			if (this.ChildNodes.Count == 0)
+				this.AsString += " (Empty)";
+			else
+				this.ChildNodes[this.ChildNodes.Count - 1].Flags |= AstNodeFlags.IsTail;
+		}
 
-    private object EvaluateOne(ScriptThread thread) {
-      thread.CurrentNode = this;  //standard prolog
-      object result = _singleChild.Evaluate(thread);
-      thread.CurrentNode = Parent; //standard epilog
-      return result;
-    }
+		public override void SetIsTail()
+		{
+			base.SetIsTail();
 
-    private object EvaluateMultiple(ScriptThread thread) {
-      thread.CurrentNode = this;  //standard prolog
-      object result = null;
-      for (int i=0; i< ChildNodes.Count; i++) {
-        result = ChildNodes[i].Evaluate(thread);
-      }
-      thread.CurrentNode = Parent; //standard epilog
-      return result; //return result of last statement
-    }
+			if (this.ChildNodes.Count > 0)
+				this.ChildNodes[this.ChildNodes.Count - 1].SetIsTail();
+		}
 
-    public override void SetIsTail() {
-      base.SetIsTail();
-      if (ChildNodes.Count > 0)
-        ChildNodes[ChildNodes.Count - 1].SetIsTail(); 
-    }
+		protected override object DoEvaluate(ScriptThread thread)
+		{
+			// Standard prolog
+			thread.CurrentNode = this;
 
-    
-  }//class
+			lock (this.LockObject)
+			{
+				switch (this.ChildNodes.Count)
+				{
+					case 0:
+						this.Evaluate = this.EvaluateEmpty;
+						break;
 
-}//namespace
+					case 1:
+						this.singleChild = this.ChildNodes[0];
+						this.Evaluate = this.EvaluateOne;
+						break;
+
+					default:
+						this.Evaluate = this.EvaluateMultiple;
+						break;
+				}
+			}
+
+			var result = this.Evaluate(thread);
+
+			// Standard epilog
+			thread.CurrentNode = this.Parent;
+			return result;
+		}
+
+		private object EvaluateEmpty(ScriptThread thread)
+		{
+			return null;
+		}
+
+		private object EvaluateMultiple(ScriptThread thread)
+		{
+			// Standard prolog
+			thread.CurrentNode = this;
+
+			object result = null;
+			for (int i = 0; i < this.ChildNodes.Count; i++)
+			{
+				result = this.ChildNodes[i].Evaluate(thread);
+			}
+
+			// Standard epilog
+			thread.CurrentNode = this.Parent;
+
+			// Return result of last statement
+			return result;
+		}
+
+		private object EvaluateOne(ScriptThread thread)
+		{
+			// Standard prolog
+			thread.CurrentNode = this;
+
+			object result = this.singleChild.Evaluate(thread);
+
+			// Standard epilog
+			thread.CurrentNode = this.Parent;
+			return result;
+		}
+	}
+}

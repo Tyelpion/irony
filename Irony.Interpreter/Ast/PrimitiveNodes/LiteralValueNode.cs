@@ -1,30 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 using Irony.Ast;
 using Irony.Parsing;
-using Irony.Interpreter;
 
-namespace Irony.Interpreter.Ast {
-  public class LiteralValueNode : AstNode {
-    public object Value;
+namespace Irony.Interpreter.Ast
+{
+	public class LiteralValueNode : AstNode
+	{
+		public object Value;
 
-    public override void Init(AstContext context, ParseTreeNode treeNode) {
-      base.Init(context, treeNode); 
-      Value = treeNode.Token.Value;
-      AsString = Value == null ? "null" : Value.ToString();
-      if (Value is string)
-        AsString = "\"" + AsString + "\"";
-    }
+		public override void Init(AstContext context, ParseTreeNode treeNode)
+		{
+			base.Init(context, treeNode);
+			this.Value = treeNode.Token.Value;
+			this.AsString = this.Value == null ? "null" : this.Value.ToString();
 
-    protected override object DoEvaluate(ScriptThread thread) {
-      return Value; 
-    }
+			if (this.Value is string)
+				this.AsString = "\"" + this.AsString + "\"";
+		}
 
-    public override bool IsConstant() {
-      return true; 
-    }
-  }//class
+		public override bool IsConstant()
+		{
+			return true;
+		}
+
+		protected override object DoEvaluate(ScriptThread thread)
+		{
+			return this.Value;
+		}
+	}
 }
