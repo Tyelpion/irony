@@ -1,82 +1,100 @@
-﻿#region License
+#region License
+
 /* **********************************************************************************
  * Copyright (c) Roman Ivantsov
  * This source code is subject to terms and conditions of the MIT License
  * for Irony. A copy of the license can be found in the License.txt file
- * at the root of this distribution. 
- * By using this source code in any fashion, you are agreeing to be bound by the terms of the 
+ * at the root of this distribution.
+ * By using this source code in any fashion, you are agreeing to be bound by the terms of the
  * MIT License.
  * You must not remove this notice from this software.
  * **********************************************************************************/
-#endregion
+
+#endregion License
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Numerics;
-using Irony.Parsing;
 using Irony.Interpreter.Ast;
+using Irony.Parsing;
 
-namespace Irony.Interpreter { 
+namespace Irony.Interpreter
+{
+	public class ConsoleWriteEventArgs : EventArgs
+	{
+		public string Text;
 
-  public class ConsoleWriteEventArgs : EventArgs {
-    public string Text;
-    public ConsoleWriteEventArgs(string text) {
-      Text = text;
-    }
-  }
+		public ConsoleWriteEventArgs(string text)
+		{
+			this.Text = text;
+		}
+	}
 
+	/// <summary>
+	/// Note: mark the derived language-specific class as sealed - important for JIT optimizations
+	/// details here: http://www.codeproject.com/KB/dotnet/JITOptimizations.aspx
+	/// </summary>
+	public partial class LanguageRuntime
+	{
+		public readonly LanguageData Language;
 
-  //Note: mark the derived language-specific class as sealed - important for JIT optimizations
-  // details here: http://www.codeproject.com/KB/dotnet/JITOptimizations.aspx
-  public partial class LanguageRuntime {
-    public readonly LanguageData Language;
-    public OperatorHandler OperatorHandler; 
-    //Converter of the result for comparison operation; converts bool value to values
-    // specific for the language
-    public UnaryOperatorMethod BoolResultConverter = null;
-    //An unassigned reserved object for a language implementation
-    public NoneClass NoneValue { get; protected set; }
-    
-    //Built-in binding sources
-    public BindingSourceTable BuiltIns;
-    
-    public LanguageRuntime(LanguageData language) {
-      Language = language;
-      NoneValue = NoneClass.Value;
-      BuiltIns = new BindingSourceTable(Language.Grammar.CaseSensitive);
-      Init();
-    }
+		/// <summary>
+		/// Converter of the result for comparison operation; converts bool value to values
+		/// specific for the language
+		/// </summary>
+		public UnaryOperatorMethod BoolResultConverter = null;
 
-    public virtual void Init() {
-      InitOperatorImplementations();
-    }
+		/// <summary>
+		/// Built-in binding sources
+		/// </summary>
+		public BindingSourceTable BuiltIns;
 
-    public virtual bool IsTrue(object value) {
-      if (value is bool)
-        return (bool)value;
-      if (value is int)
-        return ((int)value != 0);
-      if(value == NoneValue) 
-        return false;
-      return value != null; 
-    }
+		public OperatorHandler OperatorHandler;
 
-    internal protected void ThrowError(string message, params object[] args) {
-      if (args != null && args.Length > 0)
-        message = string.Format(message, args);
-      throw new Exception(message);
-    }
+		public LanguageRuntime(LanguageData language)
+		{
+			this.Language = language;
+			this.NoneValue = NoneClass.Value;
+			this.BuiltIns = new BindingSourceTable(this.Language.Grammar.CaseSensitive);
+			this.Init();
+		}
 
-    internal protected void ThrowScriptError(string message, params object[] args) {
-      if (args != null && args.Length > 0)
-        message = string.Format(message, args);
-      throw new ScriptException(message);
-    }
+		/// <summary>
+		/// An unassigned reserved object for a language implementation
+		/// </summary>
+		public NoneClass NoneValue { get; protected set; }
 
-  }//class
+		public virtual void Init()
+		{
+			this.InitOperatorImplementations();
+		}
 
-}//namespace
+		public virtual bool IsTrue(object value)
+		{
+			if (value is bool)
+				return (bool) value;
 
+			if (value is int)
+				return ((int) value != 0);
+
+			if (value == this.NoneValue)
+				return false;
+
+			return value != null;
+		}
+
+		protected internal void ThrowError(string message, params object[] args)
+		{
+			if (args != null && args.Length > 0)
+				message = string.Format(message, args);
+
+			throw new Exception(message);
+		}
+
+		protected internal void ThrowScriptError(string message, params object[] args)
+		{
+			if (args != null && args.Length > 0)
+				message = string.Format(message, args);
+
+			throw new ScriptException(message);
+		}
+	}
+}
