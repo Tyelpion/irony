@@ -1,96 +1,131 @@
-﻿#region License
+#region License
+
 /* **********************************************************************************
  * Copyright (c) Roman Ivantsov
  * This source code is subject to terms and conditions of the MIT License
  * for Irony. A copy of the license can be found in the License.txt file
- * at the root of this distribution. 
- * By using this source code in any fashion, you are agreeing to be bound by the terms of the 
+ * at the root of this distribution.
+ * By using this source code in any fashion, you are agreeing to be bound by the terms of the
  * MIT License.
  * You must not remove this notice from this software.
  * **********************************************************************************/
-#endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+#endregion License
 
 using Irony.Ast;
 using Irony.Parsing;
 
-namespace Irony.Interpreter.Ast {
+namespace Irony.Interpreter.Ast
+{
+	/// <summary>
+	/// A node representing an anonymous function
+	/// </summary>
+	public class LambdaNode : AstNode
+	{
+		public AstNode Body;
+		public AstNode Parameters;
 
-  //A node representing an anonymous function
-  public class LambdaNode : AstNode {
-    public AstNode Parameters;
-    public AstNode Body;
+		public LambdaNode()
+		{ }
 
-    public LambdaNode() { }
+		/// <summary>
+		/// Used by <see cref="FunctionDefNode"/>
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="node"></param>
+		/// <param name="parameters"></param>
+		/// <param name="body"></param>
+		public LambdaNode(AstContext context, ParseTreeNode node, ParseTreeNode parameters, ParseTreeNode body)
+		{
+			this.InitImpl(context, node, parameters, body);
+		}
 
-    //Used by FunctionDefNode
-    public LambdaNode(AstContext context, ParseTreeNode node, ParseTreeNode parameters, ParseTreeNode body) {
-      InitImpl(context, node, parameters, body);
-    }
+		public object Call(Scope creatorScope, ScriptThread thread, object[] parameters)
+		{
+			// Prolog, not standard - the caller is NOT target node's parent
+			var save = thread.CurrentNode;
 
-    public override void Init(AstContext context, ParseTreeNode parseNode) {
-      var mappedNodes = parseNode.GetMappedChildNodes();
-      InitImpl(context, parseNode, mappedNodes[0], mappedNodes[1]);
-    }
+			thread.CurrentNode = this;
+			thread.PushClosureScope(this.DependentScopeInfo, creatorScope, parameters);
 
-    private void InitImpl(AstContext context, ParseTreeNode parseNode, ParseTreeNode parametersNode, ParseTreeNode bodyNode) {
-      base.Init(context, parseNode);
-      Parameters = AddChild("Parameters", parametersNode);
-      Body = AddChild("Body", bodyNode);
-      AsString = "Lambda[" + Parameters.ChildNodes.Count + "]";
-      Body.SetIsTail(); //this will be propagated to the last statement
-    }
+			// Pre-process parameters
+			this.Parameters.Evaluate(thread);
+			var result = this.Body.Evaluate(thread);
+			thread.PopScope();
 
-    public override void Reset() {
-      DependentScopeInfo = null; 
-      base.Reset();
-    }
+			// Epilog, restoring caller
+			thread.CurrentNode = save;
+			return result;
+		}
 
-    protected override object DoEvaluate(ScriptThread thread) {
-      thread.CurrentNode = this;  //standard prolog
-      lock (LockObject) {
-        if (DependentScopeInfo == null) {
-          var langCaseSensitive = thread.App.Language.Grammar.CaseSensitive;
-          DependentScopeInfo = new ScopeInfo(this, langCaseSensitive);
-        }
-        // In the first evaluation the parameter list will add parameter's SlotInfo objects to Scope.ScopeInfo
-        thread.PushScope(DependentScopeInfo, null);
-        Parameters.Evaluate(thread);
-        thread.PopScope();
-        //Set Evaluate method and invoke it later
-        this.Evaluate = EvaluateAfter;
-      }
-      var result = Evaluate(thread);
-      thread.CurrentNode = Parent; //standard epilog
-      return result;
-    }
+		public override void Init(AstContext context, ParseTreeNode parseNode)
+		{
+			var mappedNodes = parseNode.GetMappedChildNodes();
+			this.InitImpl(context, parseNode, mappedNodes[0], mappedNodes[1]);
+		}
 
-    private object EvaluateAfter(ScriptThread thread) {
-      thread.CurrentNode = this;  //standard prolog
-      var closure = new Closure(thread.CurrentScope, this);
-      thread.CurrentNode = Parent; //standard epilog
-      return closure;
-    }
+		public override void Reset()
+		{
+			this.DependentScopeInfo = null;
+			base.Reset();
+		}
 
-    public object Call(Scope creatorScope, ScriptThread thread, object[] parameters) {
-      var save = thread.CurrentNode; //prolog, not standard - the caller is NOT target node's parent
-      thread.CurrentNode = this;
-      thread.PushClosureScope(DependentScopeInfo, creatorScope, parameters);
-      Parameters.Evaluate(thread); // pre-process parameters
-      var result = Body.Evaluate(thread);
-      thread.PopScope();
-      thread.CurrentNode = save; //epilog, restoring caller 
-      return result;
-    }
+		public override void SetIsTail()
+		{
+			// Ignore this call, do not mark this node as tail, it is meaningless
+		}
 
+		protected override object DoEvaluate(ScriptThread thread)
+		{
+			// Standard prolog
+			thread.CurrentNode = this;
 
-    public override void SetIsTail() {
-      //ignore this call, do not mark this node as tail, it is meaningless
-    }
-  }//class
+			lock (this.LockObject)
+			{
+				if (this.DependentScopeInfo == null)
+				{
+					var langCaseSensitive = thread.App.Language.Grammar.CaseSensitive;
+					this.DependentScopeInfo = new ScopeInfo(this, langCaseSensitive);
+				}
 
-}//namespace
+				// In the first evaluation the parameter list will add parameter's SlotInfo objects to Scope.ScopeInfo
+				thread.PushScope(this.DependentScopeInfo, null);
+
+				this.Parameters.Evaluate(thread);
+				thread.PopScope();
+
+				// Set Evaluate method and invoke it later
+				this.Evaluate = this.EvaluateAfter;
+			}
+
+			var result = this.Evaluate(thread);
+
+			// Standard epilog
+			thread.CurrentNode = this.Parent;
+			return result;
+		}
+
+		private object EvaluateAfter(ScriptThread thread)
+		{
+			// Standard prolog
+			thread.CurrentNode = this;
+
+			var closure = new Closure(thread.CurrentScope, this);
+
+			// Standard epilog
+			thread.CurrentNode = this.Parent;
+			return closure;
+		}
+
+		private void InitImpl(AstContext context, ParseTreeNode parseNode, ParseTreeNode parametersNode, ParseTreeNode bodyNode)
+		{
+			base.Init(context, parseNode);
+			this.Parameters = this.AddChild("Parameters", parametersNode);
+			this.Body = this.AddChild("Body", bodyNode);
+			this.AsString = "Lambda[" + this.Parameters.ChildNodes.Count + "]";
+
+			// This will be propagated to the last statement
+			this.Body.SetIsTail();
+		}
+	}
+}

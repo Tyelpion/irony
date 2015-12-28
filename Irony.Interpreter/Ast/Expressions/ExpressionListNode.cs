@@ -1,46 +1,52 @@
-﻿#region License
+#region License
+
 /* **********************************************************************************
  * Copyright (c) Roman Ivantsov
  * This source code is subject to terms and conditions of the MIT License
  * for Irony. A copy of the license can be found in the License.txt file
- * at the root of this distribution. 
- * By using this source code in any fashion, you are agreeing to be bound by the terms of the 
+ * at the root of this distribution.
+ * By using this source code in any fashion, you are agreeing to be bound by the terms of the
  * MIT License.
  * You must not remove this notice from this software.
  * **********************************************************************************/
-#endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+#endregion License
 
 using Irony.Ast;
 using Irony.Parsing;
 
-namespace Irony.Interpreter.Ast {
+namespace Irony.Interpreter.Ast
+{
+	/// <summary>
+	/// A node representing expression list - for example, list of argument expressions in function call
+	/// </summary>
+	public class ExpressionListNode : AstNode
+	{
+		public override void Init(AstContext context, ParseTreeNode treeNode)
+		{
+			base.Init(context, treeNode);
+			foreach (var child in treeNode.ChildNodes)
+			{
+				this.AddChild(NodeUseType.Parameter, "expr", child);
+			}
 
-  //A node representing expression list - for example, list of argument expressions in function call
-  public class ExpressionListNode : AstNode {
+			this.AsString = "Expression list";
+		}
 
-    public override void Init(AstContext context, ParseTreeNode treeNode) {
-      base.Init(context, treeNode);
-      foreach (var child in treeNode.ChildNodes) {
-          AddChild(NodeUseType.Parameter, "expr", child); 
-      }
-      AsString = "Expression list";
-    }
+		protected override object DoEvaluate(ScriptThread thread)
+		{
+			// Standard prolog
+			thread.CurrentNode = this;
 
-    protected override object DoEvaluate(ScriptThread thread) {
-      thread.CurrentNode = this;  //standard prolog
-      var values = new object[ChildNodes.Count];
-      for (int i = 0; i < values.Length; i++) {
-        values[i] = ChildNodes[i].Evaluate(thread);
-      }
-      thread.CurrentNode = Parent; //standard epilog
-      return values; 
-    }
+			var values = new object[this.ChildNodes.Count];
+			for (int i = 0; i < values.Length; i++)
+			{
+				values[i] = this.ChildNodes[i].Evaluate(thread);
+			}
 
-  }//class
-
-}//namespace
+			// Standard epilog
+			thread.CurrentNode = this.Parent;
+			return values;
+		}
+	}
+}

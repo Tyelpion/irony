@@ -125,7 +125,7 @@ namespace Refal
 			if (parserState.ExpectedTerminals.Contains(ToTerm("*")))
 			{
 				// rewind input stream and reject the token
-//				args.Context.SetSourceLocation(args.Context.CurrentToken.Location);
+				// args.Context.SetSourceLocation(args.Context.CurrentToken.Location);
 				args.Context.CurrentToken = null;
 			}
 		}

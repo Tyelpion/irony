@@ -1,61 +1,69 @@
 #region License
+
 /* **********************************************************************************
  * Copyright (c) Roman Ivantsov
  * This source code is subject to terms and conditions of the MIT License
  * for Irony. A copy of the license can be found in the License.txt file
- * at the root of this distribution. 
- * By using this source code in any fashion, you are agreeing to be bound by the terms of the 
+ * at the root of this distribution.
+ * By using this source code in any fashion, you are agreeing to be bound by the terms of the
  * MIT License.
  * You must not remove this notice from this software.
  * **********************************************************************************/
-#endregion
 
-using System;
-using System.Collections.Generic;
-using System.Text;
+#endregion License
 
 using Irony.Ast;
 using Irony.Parsing;
 
-namespace Irony.Interpreter.Ast {
-  public class IfNode : AstNode {
-    public AstNode Test;
-    public AstNode IfTrue;
-    public AstNode IfFalse;
+namespace Irony.Interpreter.Ast
+{
+	public class IfNode : AstNode
+	{
+		public AstNode IfFalse;
+		public AstNode IfTrue;
+		public AstNode Test;
 
-    public override void Init(AstContext context, ParseTreeNode treeNode) {
-      base.Init(context, treeNode);
-      var nodes = treeNode.GetMappedChildNodes();
-      Test = AddChild("Test", nodes[0]);
-      IfTrue = AddChild("IfTrue", nodes[1]);
-      if (nodes.Count > 2)
-        IfFalse = AddChild("IfFalse", nodes[2]);
-    }
+		public override void Init(AstContext context, ParseTreeNode treeNode)
+		{
+			base.Init(context, treeNode);
+			var nodes = treeNode.GetMappedChildNodes();
+			this.Test = this.AddChild("Test", nodes[0]);
+			this.IfTrue = this.AddChild("IfTrue", nodes[1]);
 
-    protected override object DoEvaluate(ScriptThread thread) {
-      thread.CurrentNode = this;  //standard prolog
-      object result = null; 
-      var test = Test.Evaluate(thread);
-      var isTrue = thread.Runtime.IsTrue(test);
-      if (isTrue) {
-        if (IfTrue != null)
-          result = IfTrue.Evaluate(thread);
-      } else {
-        if (IfFalse != null)
-          result = IfFalse.Evaluate(thread);
-      }
-      thread.CurrentNode = Parent; //standard epilog
-      return result; 
-    }
+			if (nodes.Count > 2)
+				this.IfFalse = this.AddChild("IfFalse", nodes[2]);
+		}
 
-    public override void SetIsTail() {
-      base.SetIsTail();
-      if (IfTrue != null)
-        IfTrue.SetIsTail();
-      if (IfFalse != null)
-        IfFalse.SetIsTail(); 
-    }
+		public override void SetIsTail()
+		{
+			base.SetIsTail();
 
-  }//class
+			if (this.IfTrue != null)
+				this.IfTrue.SetIsTail();
 
-}//namespace
+			if (this.IfFalse != null)
+				this.IfFalse.SetIsTail();
+		}
+
+		protected override object DoEvaluate(ScriptThread thread)
+		{
+			// Standard prolog
+			thread.CurrentNode = this;
+
+			object result = null;
+			var test = this.Test.Evaluate(thread);
+			var isTrue = thread.Runtime.IsTrue(test);
+			if (isTrue)
+			{
+				if (this.IfTrue != null)
+					result = this.IfTrue.Evaluate(thread);
+			}
+			else if (this.IfFalse != null)
+				result = this.IfFalse.Evaluate(thread);
+
+			// Standard epilog
+			thread.CurrentNode = this.Parent;
+			return result;
+		}
+	}
+}

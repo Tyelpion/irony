@@ -1,25 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+namespace Irony.Interpreter.Ast
+{
+	public class Closure : ICallTarget
+	{
+		public LambdaNode Lamda;
 
-namespace Irony.Interpreter.Ast {
-  public class Closure : ICallTarget {
-    //The scope that created closure; is used to find Parents (enclosing scopes) 
-    public Scope ParentScope; 
-    public LambdaNode Lamda;
-    public Closure(Scope parentScope, LambdaNode targetNode) {
-      ParentScope = parentScope;
-      Lamda = targetNode;
-    }
+		/// <summary>
+		/// The scope that created closure; is used to find Parents (enclosing scopes)
+		/// </summary>
+		public Scope ParentScope;
 
-    public object Call(ScriptThread thread, object[] parameters) {
-      return Lamda.Call(ParentScope, thread, parameters);
-    }
+		public Closure(Scope parentScope, LambdaNode targetNode)
+		{
+			this.ParentScope = parentScope;
+			this.Lamda = targetNode;
+		}
 
-    public override string ToString() {
-      return Lamda.ToString(); //returns nice string like "<function add>"
-    }
+		public object Call(ScriptThread thread, object[] parameters)
+		{
+			return this.Lamda.Call(this.ParentScope, thread, parameters);
+		}
 
-  } //class
+		public override string ToString()
+		{
+			// Returns nice string like "<function add>"
+			return this.Lamda.ToString();
+		}
+	}
 }

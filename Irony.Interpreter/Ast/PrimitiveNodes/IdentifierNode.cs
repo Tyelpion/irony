@@ -48,7 +48,11 @@ namespace Irony.Interpreter.Ast
 			this.AsString = this.Symbol;
 		}
 
-		//Executed only once, on the first call
+		/// <summary>
+		/// Executed only once, on the first call
+		/// </summary>
+		/// <param name="thread"></param>
+		/// <returns></returns>
 		protected override object DoEvaluate(ScriptThread thread)
 		{
 			// Standard prolog
