@@ -91,7 +91,7 @@
     <Compile Include="Bindings\BuiltInObjectBinding.cs" />
     <Compile Include="Bindings\SpecialFormBinding.cs" />
     <Compile Include="Bindings\ModuleExport.cs" />
-    <Compile Include="SriptApplication\ConsoleAdaptor.cs" />
+    <Compile Include="ScriptApplication\ConsoleAdaptor.cs" />
     <Compile Include="Ast\AstContext\OperatorHandler.cs" />
     <Compile Include="Utilities\Util.cs" />
     <Compile Include="_Evaluator\ExpressionEvaluator.cs" />
@@ -108,9 +108,9 @@
     <Compile Include="Scopes\ModuleInfo.cs" />
     <Compile Include="Scopes\SlotInfo.cs" />
     <Compile Include="Scopes\ScopeBase.cs" />
-    <Compile Include="SriptApplication\CommandLine.cs" />
-    <Compile Include="SriptApplication\ScriptApp.cs" />
-    <Compile Include="SriptApplication\ScriptThread.cs" />
+    <Compile Include="ScriptApplication\CommandLine.cs" />
+    <Compile Include="ScriptApplication\ScriptApp.cs" />
+    <Compile Include="ScriptApplication\ScriptThread.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

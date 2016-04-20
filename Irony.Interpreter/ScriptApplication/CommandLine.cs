@@ -32,12 +32,12 @@ namespace Irony.Interpreter
 
 		int Read();
 
-		//reads a key
+		// Reads a key
 		string ReadLine();
 
 		void SetTextStyle(ConsoleTextStyle style);
 
-		//reads a line; returns null if Ctrl-C is pressed
+		// Reads a line; returns null if Ctrl-C is pressed
 		void SetTitle(string title);
 
 		void Write(string text);
