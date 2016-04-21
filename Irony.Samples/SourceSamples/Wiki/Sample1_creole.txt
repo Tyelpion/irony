@@ -1,4 +1,4 @@
-normal 
+normal
 **bold text **
 **bold //bold-italic** italic// normal
 
@@ -32,7 +32,7 @@ Numbered lists
 
 Forced line break:
 This is the first line,\\and this is the second.
- 
+
 Link
 [[http://www.google.com]]
 

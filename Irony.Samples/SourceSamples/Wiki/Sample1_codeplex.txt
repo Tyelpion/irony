@@ -1,8 +1,8 @@
 *bold text*
-_italicized text_ 
-+underlined text+ 
+_italicized text_
++underlined text+
 ~~strikethrough text~~
-NORMAL^^superscript text^^ 
+NORMAL^^superscript text^^
 NORMAL,,subscript text,,
 *bold _bold-italic* italic_ normal
 
@@ -33,15 +33,15 @@ NORMAL,,subscript text,,
 
 {"   not *formatted* _text_ "}
 
-<{this is left aligned content}< 
->{this is right aligned content}> 
-: this is indented 
-:: this is double-indented 
+<{this is left aligned content}<
+>{this is right aligned content}>
+: this is indented
+:: this is double-indented
 
 //create an anchor
 {anchor:anchorName}
 
-// link to an anchor 
+// link to an anchor
 [#anchorName]
 
 //Link
@@ -64,7 +64,7 @@ NORMAL,,subscript text,,
 | Row 2 - Cell 1 | Row 2 - Cell 2 | Row 2 - Cell 3 |
 
 //code sample (no coloring)
-{{ 
+{{
   public void function() {
   }
 }}
