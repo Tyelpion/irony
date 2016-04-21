@@ -30,13 +30,20 @@ namespace Irony.Interpreter
 		/// Note: ran some primitive tests, and it appears that use of smart boxing makes it slower
 		/// by about 5-10%; so disabling it for now
 		/// </summary>
-		public bool SmartBoxingEnabled = false;
+		public bool SmartBoxingEnabled;
 
 		private const int _boxesMiddle = 2048;
 
-		private static ExpressionType[] _overflowOperators = new ExpressionType[] {
-			ExpressionType.Add, ExpressionType.AddChecked, ExpressionType.Subtract, ExpressionType.SubtractChecked,
-			ExpressionType.Multiply, ExpressionType.MultiplyChecked, ExpressionType.Power};
+		private static ExpressionType[] _overflowOperators =
+		{
+			ExpressionType.Add,
+			ExpressionType.AddChecked,
+			ExpressionType.Subtract,
+			ExpressionType.SubtractChecked,
+			ExpressionType.Multiply,
+			ExpressionType.MultiplyChecked,
+			ExpressionType.Power
+		};
 
 		/// <summary>
 		/// Smart boxing: boxes for a bunch of integers are preallocated
@@ -154,7 +161,7 @@ namespace Irony.Interpreter
 
 		public static object ConvertBigIntToComplex(object value)
 		{
-			BigInteger bi = (BigInteger) value;
+			var bi = (BigInteger) value;
 			return new Complex((double) bi, 0);
 		}
 

@@ -10,7 +10,9 @@ namespace Irony.Parsing
 	{
 		public const char NoEscape = '\0';
 
+#pragma warning disable RECS0122 // Initializing field with default value is redundant
 		public char EscapeChar = NoEscape;
+#pragma warning restore RECS0122 // Initializing field with default value is redundant
 
 		private char[] stopChars;
 

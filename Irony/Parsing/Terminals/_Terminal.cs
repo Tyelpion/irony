@@ -21,11 +21,11 @@ namespace Irony.Parsing
 	{
 		public static int High = 1000;
 		public static int Low = -1000;
-		public static int Normal = 0;
+		public static int Normal;
 		public static int ReservedWords = 900;
 	}
 
-	public partial class Terminal : BnfTerm
+	public class Terminal : BnfTerm
 	{
 		#region Constructors
 

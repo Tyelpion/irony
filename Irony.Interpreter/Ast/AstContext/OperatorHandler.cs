@@ -171,7 +171,7 @@ namespace Irony.Interpreter.Ast
 
 		public void Add(string symbol, ExpressionType expressionType, int precedence, Associativity associativity = Associativity.Left)
 		{
-			var info = new OperatorInfo()
+			var info = new OperatorInfo
 			{
 				Symbol = symbol,
 				ExpressionType = expressionType,

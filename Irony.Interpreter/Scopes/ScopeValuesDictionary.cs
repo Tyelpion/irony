@@ -22,7 +22,7 @@ namespace Irony.Interpreter
 	/// </summary>
 	public class ScopeValuesDictionary : IDictionary<string, object>
 	{
-		private ScopeBase scope;
+		private readonly ScopeBase scope;
 
 		internal ScopeValuesDictionary(ScopeBase scope)
 		{

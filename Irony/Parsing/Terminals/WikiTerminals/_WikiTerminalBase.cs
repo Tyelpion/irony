@@ -21,7 +21,7 @@ namespace Irony.Parsing
 		public string HtmlElementName, ContainerHtmlElementName;
 		public string OpenHtmlTag, CloseHtmlTag;
 
-		public WikiTerminalBase(string name, WikiTermType termType, string openTag, string closeTag, string htmlElementName) : base(name)
+		protected WikiTerminalBase(string name, WikiTermType termType, string openTag, string closeTag, string htmlElementName) : base(name)
 		{
 			this.TermType = termType;
 			this.OpenTag = openTag;

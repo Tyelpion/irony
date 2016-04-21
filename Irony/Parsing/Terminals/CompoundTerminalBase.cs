@@ -107,11 +107,11 @@ namespace Irony.Parsing
 
 		#region constructors and initialization
 
-		public CompoundTerminalBase(string name) : this(name, TermFlags.None)
+		protected CompoundTerminalBase(string name) : this(name, TermFlags.None)
 		{
 		}
 
-		public CompoundTerminalBase(string name, TermFlags flags) : base(name)
+		protected CompoundTerminalBase(string name, TermFlags flags) : base(name)
 		{
 			this.SetFlag(flags);
 			this.Escapes = GetDefaultEscapes();
@@ -136,7 +136,7 @@ namespace Irony.Parsing
 		/// <summary>
 		/// Case sensitivity for prefixes and suffixes
 		/// </summary>
-		public bool CaseSensitivePrefixesSuffixes = false;
+		public bool CaseSensitivePrefixesSuffixes;
 
 		public Char EscapeChar = '\\';
 		public EscapeTable Escapes = new EscapeTable();

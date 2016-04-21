@@ -20,11 +20,9 @@ namespace Irony.Interpreter.Ast
 	public class IdentifierNode : AstNode
 	{
 		public string Symbol;
+
 		private Binding accessor;
-
-		public IdentifierNode()
-		{ }
-
+		
 		public override void DoSetValue(ScriptThread thread, object value)
 		{
 			// Standard prolog

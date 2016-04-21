@@ -27,7 +27,7 @@ namespace Irony.Parsing
 	/// </summary>
 	public abstract class GrammarHint : BnfTerm
 	{
-		public GrammarHint() : base("hint")
+		protected GrammarHint() : base("hint")
 		{ }
 
 		/// <summary> Gives a chance to a custom code in hint to interfere in parser automaton construction.</summary>

@@ -212,8 +212,6 @@ namespace Irony.Interpreter
 					case AppStatus.RuntimeError:
 						this.ReportException();
 						break;
-
-					default: break;
 				}
 			}
 		}

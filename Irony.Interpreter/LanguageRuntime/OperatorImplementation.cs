@@ -47,7 +47,7 @@ namespace Irony.Interpreter
 			this.Op = op;
 			this.Arg1Type = arg1Type;
 			this.Arg2Type = arg2Type;
-			int h0 = (int) this.Op;
+			var h0 = (int) this.Op;
 			int h1 = this.Arg1Type.GetHashCode();
 			int h2 = this.Arg2Type.GetHashCode();
 			this.HashCode = unchecked(h0 << 8 ^ h1 << 4 ^ h2);
@@ -63,7 +63,7 @@ namespace Irony.Interpreter
 			this.Op = op;
 			this.Arg1Type = arg1Type;
 			this.Arg2Type = null;
-			int h0 = (int) this.Op;
+			var h0 = (int) this.Op;
 			int h1 = this.Arg1Type.GetHashCode();
 			int h2 = 0;
 			this.HashCode = unchecked(h0 << 8 ^ h1 << 4 ^ h2);

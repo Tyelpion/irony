@@ -21,7 +21,7 @@ namespace Irony.Interpreter
 	{
 		public static NoneClass Value = new NoneClass();
 
-		private string toString;
+		private readonly string toString;
 
 		public NoneClass(string toString)
 		{

@@ -35,7 +35,7 @@ namespace Irony.Parsing
 		/// </summary>
 		internal readonly ParserState InitialState;
 
-		private Grammar grammar;
+		private readonly Grammar grammar;
 
 		public Parser(Grammar grammar) : this(new LanguageData(grammar))
 		{ }

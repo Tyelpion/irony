@@ -26,7 +26,7 @@ namespace Irony.Parsing
 		/// <summary>
 		/// Normally false, meaning keywords (symbols in grammar consisting of letters) cannot be followed by a letter or digit
 		/// </summary>
-		public bool AllowAlphaAfterKeyword = false;
+		public bool AllowAlphaAfterKeyword;
 
 		public KeyTerm(string text, string name) : base(name)
 		{

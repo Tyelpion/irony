@@ -44,7 +44,7 @@ namespace Irony.Parsing
 		/// used in scanner error recovery, and in quick parse path in NumberLiterals, Identifiers
 		/// </summary>
 		[Obsolete("Use IsWhitespaceOrDelimiter() method instead.")]
-		public string Delimiters = null;
+		public string Delimiters;
 
 		/// <summary>
 		/// Shown in Grammar info tab

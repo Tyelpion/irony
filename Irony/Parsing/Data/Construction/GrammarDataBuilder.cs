@@ -21,9 +21,9 @@ namespace Irony.Parsing.Construction
 		/// </summary>
 		internal int lastItemId;
 
-		private Grammar grammar;
+		private readonly Grammar grammar;
+		private readonly LanguageData language;
 		private GrammarData grammarData;
-		private LanguageData language;
 
 		/// <summary>
 		/// Internal counter for generating names for unnamed non-terminals

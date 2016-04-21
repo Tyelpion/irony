@@ -18,10 +18,10 @@ namespace Irony.Parsing.Construction
 {
 	internal class ScannerDataBuilder
 	{
+		private readonly Grammar grammar;
+		private readonly LanguageData language;
 		private ScannerData data;
-		private Grammar grammar;
 		private GrammarData grammarData;
-		private LanguageData language;
 
 		internal ScannerDataBuilder(LanguageData language)
 		{

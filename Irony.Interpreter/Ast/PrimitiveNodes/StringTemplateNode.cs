@@ -77,7 +77,7 @@ namespace Irony.Interpreter.Ast
 
 		#endregion embedded classes
 
-		private SegmentList segments = new SegmentList();
+		private readonly SegmentList segments = new SegmentList();
 		private string template;
 
 		/// <summary>

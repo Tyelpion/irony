@@ -25,7 +25,7 @@ namespace Irony.Parsing
 		{
 			var sb = new StringBuilder();
 			var ntList = language.GrammarData.NonTerminals.ToList();
-			ntList.Sort((x, y) => string.Compare(x.Name, y.Name));
+			ntList.Sort((x, y) => string.Compare(x.Name, y.Name, StringComparison.CurrentCulture));
 
 			foreach (var nt in ntList)
 			{
@@ -55,11 +55,11 @@ namespace Irony.Parsing
 				sb.AppendLine();
 				var srConflicts = state.BuilderData.GetShiftReduceConflicts();
 				if (srConflicts.Count > 0)
-					sb.AppendLine("  Shift-reduce conflicts on inputs: " + srConflicts.ToString());
+					sb.AppendLine($"  Shift-reduce conflicts on inputs: {srConflicts}");
 
 				var ssConflicts = state.BuilderData.GetReduceReduceConflicts();
 				if (ssConflicts.Count > 0)
-					sb.AppendLine("  Reduce-reduce conflicts on inputs: " + ssConflicts.ToString());
+					sb.AppendLine($"  Reduce-reduce conflicts on inputs: {ssConflicts}");
 
 				// LRItems
 				if (state.BuilderData.ShiftItems.Count > 0)
@@ -67,7 +67,7 @@ namespace Irony.Parsing
 					sb.AppendLine("  Shift items:");
 					foreach (var item in state.BuilderData.ShiftItems)
 					{
-						sb.AppendLine("    " + item.ToString());
+						sb.AppendLine($"    {item}");
 					}
 				}
 
@@ -78,8 +78,8 @@ namespace Irony.Parsing
 					{
 						var sItem = item.ToString();
 						if (item.Lookaheads.Count > 0)
-							sItem += " [" + item.Lookaheads.ToString() + "]";
-						sb.AppendLine("    " + sItem);
+							sItem += $" [{item.Lookaheads}]";
+						sb.AppendLine($"    {sItem}");
 					}
 				}
 
@@ -110,7 +110,7 @@ namespace Irony.Parsing
 		public static string PrintTerminals(LanguageData language)
 		{
 			var termList = language.GrammarData.Terminals.ToList();
-			termList.Sort((x, y) => string.Compare(x.Name, y.Name));
+			termList.Sort((x, y) => string.Compare(x.Name, y.Name, StringComparison.CurrentCulture));
 			var result = string.Join(Environment.NewLine, termList);
 
 			return result;

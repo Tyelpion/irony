@@ -50,7 +50,7 @@ namespace Irony.Interpreter
 
 		public override string ToString()
 		{
-			return "{Binding to + " + this.TargetInfo.ToString() + "}";
+			return $"{{Binding to + {this.TargetInfo}}}";
 		}
 	}
 

@@ -29,10 +29,7 @@ namespace Irony.Interpreter.Ast
 		private int failureCount;
 		private bool isConstant;
 		private OperatorImplementation lastUsed;
-
-		public BinaryOperationNode()
-		{ }
-
+		
 		public override void Init(AstContext context, ParseTreeNode treeNode)
 		{
 			base.Init(context, treeNode);

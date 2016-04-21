@@ -13,7 +13,7 @@ namespace Irony.Parsing
 		public ShiftParserAction(BnfTerm term, ParserState newState)
 		{
 			if (newState == null)
-				throw new Exception("ParserShiftAction: newState may not be null. term: " + term.ToString());
+				throw new Exception($"ParserShiftAction: newState may not be null. term: {term}");
 
 			this.Term = term;
 			this.NewState = newState;

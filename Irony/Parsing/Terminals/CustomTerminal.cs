@@ -29,7 +29,7 @@ namespace Irony.Parsing
 	{
 		public readonly StringList Prefixes = new StringList();
 
-		private MatchHandler handler;
+		private readonly MatchHandler handler;
 
 		public CustomTerminal(string name, MatchHandler handler, params string[] prefixes) : base(name)
 		{

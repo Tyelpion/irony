@@ -40,7 +40,7 @@ namespace Irony.Interpreter
 		/// Converter of the result for comparison operation; converts bool value to values
 		/// specific for the language
 		/// </summary>
-		public UnaryOperatorMethod BoolResultConverter = null;
+		public UnaryOperatorMethod BoolResultConverter;
 
 		/// <summary>
 		/// Built-in binding sources

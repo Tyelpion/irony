@@ -47,7 +47,7 @@ namespace Irony.Parsing
 
 			public override string ToString()
 			{
-				return this.Description + "; action: " + this.Action.ToString();
+				return $"{this.Description}; action: {this.Action}";
 			}
 		}
 
@@ -68,12 +68,12 @@ namespace Irony.Parsing
 			{
 				var ce = this.ConditionalEntries[i];
 				if (traceEnabled)
-					context.AddTrace("  Checking condition: " + ce.Description);
+					context.AddTrace($"  Checking condition: {ce.Description}");
 
 				if (ce.Condition(context))
 				{
 					if (traceEnabled)
-						context.AddTrace("  Condition is TRUE, executing action: " + ce.Action.ToString());
+						context.AddTrace($"  Condition is TRUE, executing action: {ce.Action}");
 
 					ce.Action.Execute(context);
 					return;
@@ -83,13 +83,13 @@ namespace Irony.Parsing
 			// If no conditions matched, execute default action
 			if (this.DefaultAction == null)
 			{
-				context.AddParserError("Fatal parser error: no conditions matched in conditional parser action, and default action is null. State: {0}", context.CurrentParserState.Name);
+				context.AddParserError($"Fatal parser error: no conditions matched in conditional parser action, and default action is null. State: {context.CurrentParserState.Name}");
 				context.Parser.RecoverFromError();
 				return;
 			}
 
 			if (traceEnabled)
-				context.AddTrace("  All conditions failed, executing default action: " + this.DefaultAction.ToString());
+				context.AddTrace($"  All conditions failed, executing default action: {this.DefaultAction}");
 
 			this.DefaultAction.Execute(context);
 		}

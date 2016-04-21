@@ -121,7 +121,7 @@ namespace Irony.Interpreter
 		public object Instance;
 
 		private Binding binding;
-		private BindingFlags invokeFlags;
+		private readonly BindingFlags invokeFlags;
 
 		public ClrMethodBindingTargetInfo(Type declaringType, string methodName, object instance = null) : base(methodName, ClrTargetType.Method)
 		{
@@ -161,7 +161,7 @@ namespace Irony.Interpreter
 
 	public class ClrNamespaceBindingTargetInfo : ClrInteropBindingTargetInfo
 	{
-		private ConstantBinding binding;
+		private readonly ConstantBinding binding;
 
 		public ClrNamespaceBindingTargetInfo(string ns) : base(ns, ClrTargetType.Namespace)
 		{
@@ -208,7 +208,7 @@ namespace Irony.Interpreter
 
 	public class ClrTypeBindingTargetInfo : ClrInteropBindingTargetInfo
 	{
-		private ConstantBinding binding;
+		private readonly ConstantBinding binding;
 
 		public ClrTypeBindingTargetInfo(Type type) : base(type.Name, ClrTargetType.Type)
 		{

@@ -92,21 +92,21 @@ namespace Irony.Parsing
 	{
 		#region consructors
 
-		public BnfTerm(string name) : this(name, name)
+		protected BnfTerm(string name) : this(name, name)
 		{
 		}
 
-		public BnfTerm(string name, string errorAlias, Type nodeType) : this(name, errorAlias)
+		protected BnfTerm(string name, string errorAlias, Type nodeType) : this(name, errorAlias)
 		{
 			this.AstConfig.NodeType = nodeType;
 		}
 
-		public BnfTerm(string name, string errorAlias, AstNodeCreator nodeCreator) : this(name, errorAlias)
+		protected BnfTerm(string name, string errorAlias, AstNodeCreator nodeCreator) : this(name, errorAlias)
 		{
 			this.AstConfig.NodeCreator = nodeCreator;
 		}
 
-		public BnfTerm(string name, string errorAlias)
+		protected BnfTerm(string name, string errorAlias)
 		{
 			this.Name = name;
 			this.ErrorAlias = errorAlias;
@@ -162,7 +162,11 @@ namespace Irony.Parsing
 
 		public TermFlags Flags;
 		public string Name;
+
+#pragma warning disable RECS0122 // Initializing field with default value is redundant
 		public int Precedence = NoPrecedence;
+#pragma warning restore RECS0122 // Initializing field with default value is redundant
+
 		protected GrammarData GrammarData;
 
 		public Grammar Grammar

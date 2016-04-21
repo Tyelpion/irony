@@ -27,7 +27,7 @@ namespace Irony
 
 		public static string JoinStrings(string separator, IEnumerable<string> values)
 		{
-			StringList list = new StringList();
+			var list = new StringList();
 			list.AddRange(values);
 
 			string[] arr = new string[list.Count];
@@ -44,7 +44,7 @@ namespace Irony
 	/// </summary>
 	public class CharHashSet : HashSet<char>
 	{
-		private bool caseSensitive;
+		private readonly bool caseSensitive;
 
 		public CharHashSet(bool caseSensitive = true)
 		{
@@ -118,7 +118,7 @@ namespace Irony
 
 		public void AddRange(params string[] items)
 		{
-			base.UnionWith(items);
+			this.UnionWith(items);
 		}
 
 		public override string ToString()

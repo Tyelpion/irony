@@ -4,9 +4,6 @@ namespace Irony.Parsing
 {
 	public abstract partial class ParserAction
 	{
-		public ParserAction()
-		{ }
-
 		public virtual void Execute(ParsingContext context)
 		{ }
 

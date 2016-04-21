@@ -16,7 +16,7 @@ namespace Irony.Parsing
 {
 	public class PrecedenceBasedParserAction : ConditionalParserAction
 	{
-		private ReduceParserAction reduceAction;
+		private readonly ReduceParserAction reduceAction;
 		private ShiftParserAction shiftAction;
 
 		public PrecedenceBasedParserAction(BnfTerm shiftTerm, ParserState newShiftState, Production reduceProduction)

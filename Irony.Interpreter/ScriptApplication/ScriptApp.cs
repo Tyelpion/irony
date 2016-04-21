@@ -68,7 +68,7 @@ namespace Irony.Interpreter
 
 		public AppStatus Status;
 
-		private object lockObject = new object();
+		private readonly object lockObject = new object();
 
 		private IList<Assembly> importedAssemblies = new List<Assembly>();
 
@@ -264,7 +264,7 @@ namespace Irony.Interpreter
 		{
 			if (this.ConsoleWrite != null)
 			{
-				ConsoleWriteEventArgs args = new ConsoleWriteEventArgs(text);
+				var args = new ConsoleWriteEventArgs(text);
 				this.ConsoleWrite(this, args);
 			}
 		}

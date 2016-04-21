@@ -40,7 +40,7 @@ namespace Irony.Interpreter
 		/// Making the class abstract so it won't load into Grammar Explorer
 		/// </summary>
 		/// <param name="caseSensitive"></param>
-		public InterpretedLanguageGrammar(bool caseSensitive) : base(caseSensitive)
+		protected InterpretedLanguageGrammar(bool caseSensitive) : base(caseSensitive)
 		{
 			this.LanguageFlags = LanguageFlags.CreateAst;
 		}

@@ -18,9 +18,9 @@ namespace Irony.Parsing
 {
 	public class SourceStream : ISourceStream
 	{
-		private char[] chars;
+		private readonly char[] chars;
+		private readonly int tabWidth;
 		private StringComparison stringComparison;
-		private int tabWidth;
 		private int textLength;
 
 		public SourceStream(string text, bool caseSensitive, int tabWidth) : this(text, caseSensitive, tabWidth, new SourceLocation())
@@ -180,9 +180,8 @@ namespace Irony.Parsing
 				until = this.textLength;
 
 			var p = this.location.Position;
-			var text = this.text.Substring(p, until - p);
 
-			return text;
+			return this.text.Substring(p, until - p);
 		}
 
 		/// <summary>

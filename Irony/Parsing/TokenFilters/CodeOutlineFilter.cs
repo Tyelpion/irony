@@ -26,10 +26,10 @@ namespace Irony.Parsing
 		public Token PreviousToken;
 		public SourceLocation PreviousTokenLocation;
 
+		private readonly Grammar grammar;
 		private bool checkBraces, checkOperator;
 		private ParsingContext context;
 		private bool doubleEof;
-		private Grammar grammar;
 		private GrammarData grammarData;
 		private bool isContinuation, prevIsContinuation;
 		private bool isOperator, prevIsOperator;

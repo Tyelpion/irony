@@ -188,8 +188,7 @@ namespace Irony.Parsing
 				allStartSymbols.Add(subType.Start);
 				this.startSymbolsFirsts += subType.Start[0].ToString();
 
-				if ((subType.Flags & StringOptions.IsTemplate) != 0)
-					isTemplate = true;
+				isTemplate |= (subType.Flags & StringOptions.IsTemplate) != 0;
 			}
 
 			if (!this.CaseSensitivePrefixesSuffixes)

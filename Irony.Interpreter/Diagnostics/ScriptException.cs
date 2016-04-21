@@ -37,7 +37,7 @@ namespace Irony.Interpreter
 
 		public override string ToString()
 		{
-			return this.Message + Environment.NewLine + this.ScriptStackTrace.ToString();
+			return $"{this.Message}{Environment.NewLine}{this.ScriptStackTrace}";
 		}
 	}
 }
